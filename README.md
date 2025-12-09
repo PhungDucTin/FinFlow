@@ -84,6 +84,24 @@ git clone [https://github.com/username/finflow-project.git](https://github.com/u
 Cài đặt dependencies:
 Bash
 flutter pub get
+### Back-end & Database
+| Công nghệ | Phiên bản | Mục đích |
+| :--- | :--- | :--- |
+| **SQLite (sqflite)** | `^2.4.2` | Lưu trữ dữ liệu giao dịch cục bộ (Offline-first). |
+| **Firebase Auth** | `^6.1.2` | Xác thực người dùng (Login/Register). |
+| **Firebase Core** | `^4.2.1` | Nền tảng kết nối Firebase. |
+| **Path Provider** | `^2.1.5` | Tìm đường dẫn hệ thống để lưu file DB. |
+
+### Front-end & UI
+| Công nghệ | Phiên bản | Mục đích |
+| :--- | :--- | :--- |
+| **Flutter** | 3.x | Framework phát triển đa nền tảng (Android Focus). |
+| **Provider** | `^6.1.5` | Quản lý trạng thái (State Management). |
+| **Intl** | `^0.20.2` | Định dạng tiền tệ (VND) và Ngày tháng. |
+| **FL Chart** | `^1.1.1` | Vẽ biểu đồ thống kê thu chi. |
+| **Font Awesome** | `^10.12.0`| Bộ icon chuyên nghiệp bổ trợ. |
+| **Google Fonts** | `^6.3.3` | Font chữ đẹp cho ứng dụng. |
+| **Http** | `^1.6.0` | Gọi API (nếu cần mở rộng sau này). |
 Cấu hình Firebase:
 Thêm google-services.json vào android/app/.
 Thêm GoogleService-Info.plist vào ios/Runner/.
