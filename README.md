@@ -68,7 +68,44 @@ lib/
 ├── views/              # UI Screens (Dashboard, AddTransaction, Profile...)
 ├── widgets/            # Reusable Widgets (CustomButton, CalculatorKeypad...)
 └── utils/              # Constants, Formatters, AppTheme
-🗄️ Database Schema (SQLite)Bảng Transactions| Field | Type | Description || :--- | :--- | :--- || id | INTEGER PK | ID tự tăng || amount | REAL | Số tiền || note | TEXT | Ghi chú || date | TEXT | Ngày giao dịch (ISO8601) || type | TEXT | 'income' / 'expense' || category_id| INTEGER FK | Liên kết bảng Categories |Bảng Categories| Field | Type | Description || :--- | :--- | :--- || id | INTEGER PK | ID tự tăng || name | TEXT | Tên danh mục (vd: Ăn uống) || icon | TEXT | Đường dẫn icon || group | TEXT | Nhóm (Thiết yếu, Cá nhân...) |🚀 Công nghệ & Thư viện (Tech Stack)Core: Flutter SDK, Dart Language.Local Database: sqflite, path_provider (Lưu trữ giao dịch offline).Backend Services: firebase_auth, firebase_core (Đăng nhập).State Management: provider (hoặc flutter_bloc / get).UI/UX: intl (Định dạng tiền tệ/ngày tháng), fl_chart (Biểu đồ), font_awesome_flutter (Icons).⚡ Hướng dẫn Cài đặt (Installation)Clone dự án:Bashgit clone [https://github.com/username/finflow-project.git](https://github.com/username/finflow-project.git)
-Cài đặt dependencies:Bashflutter pub get
-Cấu hình Firebase:Thêm google-services.json vào android/app/.Thêm GoogleService-Info.plist vào ios/Runner/.Chạy ứng dụng:Bashflutter run
-👥 Thành viên Nhóm (Team Members)Dự án được thực hiện bởi nhóm sinh viên chuyên ngành Lập trình Mobile:STTHọ và TênVai trò (Role)GitHub1[Tên Bạn]Leader / Backend / Database- Thiết kế CSDL SQLite- Xử lý Logic thêm/sửa/xóa giao dịch- Quản lý chung@username2[Tên Bạn 2]Frontend / UI Designer- Thiết kế màn hình Dashboard, Calendar- Xử lý Animation và UX- Cắt ghép giao diện@username3[Tên Bạn 3]Auth / Settings / Integration- Tích hợp Firebase Login- Màn hình Cài đặt & Profile- Xử lý Đa ngôn ngữ@username<div align="center">Developed with ❤️ by FinFlow Team</div>
+🗄️ Database Schema (SQLite)
+Bảng Transactions | Field | Type | Description | | :--- | :--- | :--- | | id | INTEGER PK | ID tự tăng | | amount | REAL | Số tiền | | note | TEXT | Ghi chú | | date | TEXT | Ngày giao dịch (ISO8601) | | type | TEXT | 'income' / 'expense' | | category_id| INTEGER FK | Liên kết bảng Categories |
+Bảng Categories | Field | Type | Description | | :--- | :--- | :--- | | id | INTEGER PK | ID tự tăng | | name | TEXT | Tên danh mục (vd: Ăn uống) | | icon | TEXT | Đường dẫn icon | | group | TEXT | Nhóm (Thiết yếu, Cá nhân...)
+🚀 Công nghệ & Thư viện (Tech Stack)
+Core: Flutter SDK, Dart Language.
+Local Database: sqflite, path_provider (Lưu trữ giao dịch offline).
+Backend Services: firebase_auth, firebase_core (Đăng nhập).
+State Management: provider (hoặc flutter_bloc / get).
+UI/UX: intl (Định dạng tiền tệ/ngày tháng), fl_chart (Biểu đồ), font_awesome_flutter (Icons).
+⚡ Hướng dẫn Cài đặt (Installation)
+Clone dự án:
+Bash
+git clone [https://github.com/username/finflow-project.git](https://github.com/username/finflow-project.git)
+Cài đặt dependencies:
+Bash
+flutter pub get
+Cấu hình Firebase:
+Thêm google-services.json vào android/app/.
+Thêm GoogleService-Info.plist vào ios/Runner/.
+Chạy ứng dụng:
+Bash
+flutter run
+STT	Họ và Tên	                     Vai trò                (Role)	GitHub
+1	   [Tên Bạn]	         Leader / Backend / Database          @username
+                           - Thiết kế CSDL SQLite
+                           - Xử lý Logic thêm/sửa/xóa giao dịch
+                           - Quản lý chung
+2	[Tên Bạn 2]	            Frontend / UI Designer               @username
+                           - Thiết kế màn hình Dashboard, Calendar
+                           - Xử lý Animation và UX
+                           - Cắt ghép giao diện
+3	[Tên Bạn 3]	            Auth / Settings / Integration       @username
+                           - Tích hợp Firebase Login
+                           - Màn hình Cài đặt & Profile
+                           - Xử lý Đa ngôn ngữ
+<div align="center">
+Developed with ❤️ by FinFlow Team
+</div>
+
+
+
