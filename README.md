@@ -68,15 +68,18 @@ lib/
 ├── views/              # UI Screens (Dashboard, AddTransaction, Profile...)
 ├── widgets/            # Reusable Widgets (CustomButton, CalculatorKeypad...)
 └── utils/              # Constants, Formatters, AppTheme
+
 🗄️ Database Schema (SQLite)
 Bảng Transactions | Field | Type | Description | | :--- | :--- | :--- | | id | INTEGER PK | ID tự tăng | | amount | REAL | Số tiền | | note | TEXT | Ghi chú | | date | TEXT | Ngày giao dịch (ISO8601) | | type | TEXT | 'income' / 'expense' | | category_id| INTEGER FK | Liên kết bảng Categories |
 Bảng Categories | Field | Type | Description | | :--- | :--- | :--- | | id | INTEGER PK | ID tự tăng | | name | TEXT | Tên danh mục (vd: Ăn uống) | | icon | TEXT | Đường dẫn icon | | group | TEXT | Nhóm (Thiết yếu, Cá nhân...)
+
 🚀 Công nghệ & Thư viện (Tech Stack)
 Core: Flutter SDK, Dart Language.
 Local Database: sqflite, path_provider (Lưu trữ giao dịch offline).
 Backend Services: firebase_auth, firebase_core (Đăng nhập).
 State Management: provider (hoặc flutter_bloc / get).
 UI/UX: intl (Định dạng tiền tệ/ngày tháng), fl_chart (Biểu đồ), font_awesome_flutter (Icons).
+
 ⚡ Hướng dẫn Cài đặt (Installation)
 Clone dự án:
 Bash
@@ -108,20 +111,52 @@ Thêm GoogleService-Info.plist vào ios/Runner/.
 Chạy ứng dụng:
 Bash
 flutter run
-STT	Họ và Tên	                     Vai trò                (Role)	GitHub
-1	   [Tên Bạn]	         Leader / Backend / Database          @username
-                           - Thiết kế CSDL SQLite
-                           - Xử lý Logic thêm/sửa/xóa giao dịch
-                           - Quản lý chung
-2	[Tên Bạn 2]	            Frontend / UI Designer               @username
-                           - Thiết kế màn hình Dashboard, Calendar
-                           - Xử lý Animation và UX
-                           - Cắt ghép giao diện
-3	[Tên Bạn 3]	            Auth / Settings / Integration       @username
-                           - Tích hợp Firebase Login
-                           - Màn hình Cài đặt & Profile
-                           - Xử lý Đa ngôn ngữ
+
+👥 Phân công & Quản lý Dự án
+* Thành viên: [Phùng Đức Tín - Leader]
+ Vai trò: Fullstack Core & Logic
+ Nhiệm vụ chi tiết:
+- Quản lý GitHub Repo, Merge Code
+- Xây dựng DatabaseHelper (SQLite Core)
+- Viết logic xử lý dữ liệu phức tạp (tính toán số dư, tổng thu chi)
+- Xử lý logic màn hình Chi tiết giao dịch (Sửa/Xóa)
+ Nhánh Git: main, feature/backend-logic
+
+* Thành viên: []
+ Vai trò: Frontend (Main UI)
+ Nhiệm vụ chi tiết:
+- Thiết kế màn hình Dashboard (Trang chủ)
+- Xây dựng màn hình Thêm Giao Dịch (Add Transaction)
+- Tùy biến widget nhập tiền và chọn danh mục
+- Quản lý giao diện Danh mục (Thêm/Sửa danh mục)
+ Nhánh Git: ui/dashboard-enhancement, ui/add-transaction
+
+* Thành viên: [Thành viên 3]
+ Vai trò: Features (Auth & Stats)
+ Nhiệm vụ chi tiết:
+- Xây dựng màn hình Đăng nhập / Đăng ký
+- Tích hợp Firebase Authentication
+- Xây dựng màn hình Báo cáo thống kê (Biểu đồ)
+- Màn hình Cài đặt (Đổi ngôn ngữ, Nhắc nhở)
+ Nhánh Git: feature/auth-login, feature/reports-settings
 <div align="center">
+
+🤝 Quy tắc làm việc nhóm (Git Flow)
+Để đảm bảo code không bị xung đột, các thành viên vui lòng tuân thủ:
+KHÔNG code trực tiếp trên nhánh main.
+
+Mỗi khi bắt đầu tính năng mới, hãy tạo nhánh từ main:
+Bash
+git checkout main
+git pull origin main
+git checkout -b [ten-nhanh-cua-ban]
+
+Commit thường xuyên với nội dung rõ ràng:
+feat: Thêm màn hình đăng nhập
+fix: Sửa lỗi hiển thị ngày tháng
+ui: Cập nhật màu sắc dashboard
+Sau khi hoàn thành, đẩy code lên và tạo Pull Request (PR) để Leader review.
+
 Developed with ❤️ by FinFlow Team
 </div>
 
