@@ -1,3 +1,4 @@
+import 'package:flutter/rendering.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart';
 import '../models/category_model.dart';
@@ -62,7 +63,8 @@ class DatabaseHelper {
   // Hàm nạp dữ liệu mẫu
   Future _seedData(Database db) async {
     final List<Map<String, dynamic>> categories = [
-      //Chi tiêu - Thiết yếu
+      // --- CHI TIÊU (Expense) ---
+      // Nhóm: Thiết yếu
       {
         'name': 'Ăn uống',
         'type': 'expense',
@@ -78,14 +80,35 @@ class DatabaseHelper {
         'color_hex': '#F8BBD0',
       },
       {
+        'name': 'Nhà cửa',
+        'type': 'expense',
+        'group_name': 'Thiết yếu',
+        'icon_key': 'house',
+        'color_hex': '#BBDEFB',
+      }, 
+      {
         'name': 'Hóa đơn',
         'type': 'expense',
         'group_name': 'Thiết yếu',
         'icon_key': 'bill',
         'color_hex': '#B2DFDB',
       },
+      {
+        'name': 'Sức khỏe',
+        'type': 'expense',
+        'group_name': 'Thiết yếu',
+        'icon_key': 'health',
+        'color_hex': '#FFCCBC',
+      }, 
 
-      // Chi tiêu - Cá nhân
+      // Nhóm: Cá nhân
+      {
+        'name': 'Cà phê, trà đá',
+        'type': 'expense',
+        'group_name': 'Cá nhân',
+        'icon_key': 'coffee',
+        'color_hex': '#E1BEE7',
+      }, 
       {
         'name': 'Mua sắm',
         'type': 'expense',
@@ -100,25 +123,117 @@ class DatabaseHelper {
         'icon_key': 'game',
         'color_hex': '#FFCDD2',
       },
-
-      // Thu nhập
       {
-        'name': 'Lương',
+        'name': 'Du lịch',
+        'type': 'expense',
+        'group_name': 'Cá nhân',
+        'icon_key': 'travel',
+        'color_hex': '#FFF9C4',
+      },
+      {
+        'name': 'Phát triển bản thân',
+        'type': 'expense',
+        'group_name': 'Cá nhân',
+        'icon_key': 'education',
+        'color_hex': '#E1BEE7',
+      },
+      {
+        'name': 'Gặp gỡ bạn bè',
+        'type': 'expense',
+        'group_name': 'Cá nhân',
+        'icon_key': 'friends',
+        'color_hex': '#B3E5FC',
+      }, 
+      {
+        'name': 'Sách vở',
+        'type': 'expense',
+        'group_name': 'Cá nhân',
+        'icon_key': 'book',
+        'color_hex': '#FFCDD2',
+      }, 
+      {
+        'name': 'Dự tiệc',
+        'type': 'expense',
+        'group_name': 'Cá nhân',
+        'icon_key': 'party',
+        'color_hex': '#C8E6C9',
+      }, 
+     
+     // Nhóm: Tài chính
+      {
+        'name': 'Tiết kiệm',
+        'type': 'expense',
+        'group_name': 'Tài chính',
+        'icon_key': 'savings',
+        'color_hex': '#F06292',
+      },
+      {
+        'name': 'Đầu tư',
+        'type': 'expense',
+        'group_name': 'Tài chính',
+        'icon_key': 'invest',
+        'color_hex': '#F44336',
+      },
+      {
+        'name': 'Trả nợ',
+        'type': 'expense',
+        'group_name': 'Tài chính',
+        'icon_key': 'pay_debt',
+        'color_hex': '#9575CD',
+      },
+      {
+        'name': 'Cho vay',
+        'type': 'expense',
+        'group_name': 'Tài chính',
+        'icon_key': 'loan',
+        'color_hex': '#4DB6AC',
+      },
+      {
+        'name': 'Hỗ trợ gia đình',
+        'type': 'expense',
+        'group_name': 'Tài chính',
+        'icon_key': 'family',
+        'color_hex': '#FFB74D',
+      },
+      {
+        'name': 'Ủng hộ từ thiện',
+        'type': 'expense',
+        'group_name': 'Tài chính',
+        'icon_key': 'charity',
+        'color_hex': '#64B5F6',
+      },
+
+      // --- THU NHẬP (Income) ---
+      {
+        'name': 'Tiền lương',
         'type': 'income',
         'group_name': 'Thu nhập',
         'icon_key': 'salary',
         'color_hex': '#C8E6C9',
       },
       {
-        'name': 'Thưởng',
+        'name': 'Làm thêm - Ngoài giờ',
         'type': 'income',
         'group_name': 'Thu nhập',
-        'icon_key': 'bonus',
-        'color_hex': '#C8E6C9',
-      },
+        'icon_key': 'part_time',
+        'color_hex': '#DCEDC8',
+      }, // Đã thêm từ ảnh
+      {
+        'name': 'Được trả nợ',
+        'type': 'income',
+        'group_name': 'Thu nhập',
+        'icon_key': 'debt_collection',
+        'color_hex': '#B2DFDB',
+      }, // Đã thêm từ ảnh
+      {
+        'name': 'Thu nhập khác',
+        'type': 'income',
+        'group_name': 'Thu nhập',
+        'icon_key': 'other_income',
+        'color_hex': '#FFE0B2',
+      }, // Đã thêm từ ảnh
     ];
 
-    // Chạy vòng lặp để thêm từng cái vào DB
     for (var cat in categories) {
       await db.insert('categories', cat);
     }
@@ -139,9 +254,160 @@ class DatabaseHelper {
     final result = await db.rawQuery('''
       SELECT t.*, c.name as category_name, c.icon_key, c.color_hex, c.type
       FROM transactions t
-      INNEER JOIN categories c ON t.category_id = c.id
+      INNER JOIN categories c ON t.category_id = c.id
       ORDER BY t.date DESC
 ''');
     return result.map((map) => TransactionModel.fromMap(map)).toList();
+  }
+
+  // 3. Xoá giao dịch dựa trên ID
+  Future<int> deleteTransaction(int id) async {
+    final db = await instance.database;
+    return await db.delete('transactions', where: 'id = ?', whereArgs: [id]);
+  }
+
+  // 4. Cập nhật giao dịch
+  Future<int> updateTransaction(TransactionModel transaction) async {
+    final db = await instance.database;
+    return await db.update(
+      'transactions',
+      transaction.toMap(),
+      where: 'id = ?',
+      whereArgs: [transaction.id],
+    );
+  }
+
+  // 5. Lấy giao dịch trong một tháng cụ thể (Ví dụ: Tháng 10/2023)
+  Future<List<TransactionModel>> getTransactionsByMonth(
+    int month,
+    int year,
+  ) async {
+    final db = await instance.database;
+
+    // Tạo chuỗi ngày đầu tháng và cuối tháng để lọc
+    String startDate = DateTime(year, month, 1).toIso8601String();
+    // Lấy ngày đầu của tháng sau trừ đi 1 để ra ngày cuối của tháng này
+    String endDate = DateTime(year, month + 1, 0).toIso8601String();
+
+    final result = await db.rawQuery(
+      '''
+        SELECT t.*, c.name as category_name, c.icon_key, c.color_hex, c.type
+        FROM transactions t
+        INNER JOIN categories c ON t.category_id = c.id
+        WHERE t.date >= ? AND t.date <= ?
+        ORDER BY t.date DESC
+      ''',
+      [startDate, endDate],
+    );
+    return result.map((json) => TransactionModel.fromMap(json)).toList();
+  }
+
+  // 6. Lấy giao dịch trong khoảng thời gian bất kỳ (Lọc cho Ngày/Tuần/Năm)
+  Future<List<TransactionModel>> getTransactionsByDateRange(
+    DateTime start,
+    DateTime end,
+  ) async {
+    final db = await instance.database;
+
+    // Đảm bảo lấy từ đầu ngày start đến cuối ngày end
+    String startDateStr = start.toIso8601String();
+    String endDateStr = end.toIso8601String();
+
+    final result = await db.rawQuery(
+      '''
+      SELECT t.*, c.name as category_name, c.icon_key, c.color_hex, c.type
+      FROM transactions t
+      INNER JOIN categories c ON t.category_id = c.id
+      WHERE t.date >= ? AND t.date <= ?
+      ORDER BY t.date DESC
+      ''',
+      [startDateStr, endDateStr],
+    );
+
+    return result.map((json) => TransactionModel.fromMap(json)).toList();
+  }
+
+  // 7. Tính tổng tiền Thu hoặc Chi trong khoảng thời gian (Dùng trong Dashboard)
+  Future<double> calculateTotal(
+    String type,
+    DateTime start,
+    DateTime end,
+  ) async {
+    final db = await instance.database;
+
+    String startDateStr = start.toIso8601String();
+    String endDateStr = end.toIso8601String();
+
+    // SQL: Tính tổng cột amount WHERE type = 'expense' AND date trong khoảng ...
+    final result = await db.rawQuery(
+      '''
+      SELECT SUM(t.amount) as total
+      FROM transactions t 
+      INNER JOIN categories c ON t.category_id = c.id
+      WHERE c.type = ? AND t.date >= ? AND t.date <= ?
+''',
+      [type, startDateStr, endDateStr],
+    );
+
+    if (result.first['total'] != null) {
+      return (result.first['total'] as num).toDouble();
+    }
+    return 0.0;
+  }
+
+  // 8. Lấy dữ liệu thống kê theo danh mục ( Dùng cho biểu đồ tròn)
+  Future<List<Map<String, dynamic>>> getCategoryStats(
+    String type,
+    DateTime start,
+    DateTime end,
+  ) async {
+    final db = await instance.database;
+
+    String startDateStr = start.toIso8601String();
+    String endDateStr = end.toIso8601String();
+
+    return await db.rawQuery(
+      '''
+      SELECT c.name, c.color_hex, SUM(t.amount) as total
+      FROM transactions t
+      INNER JOIN categories c ON t.category_id = c.id
+      WHERE c.type = ? AND t.date >= ? AND t.date <= ?
+      GROUP BY c.id
+      ORDER BY total DESC
+''',
+      [type, startDateStr, endDateStr],
+    );
+  }
+
+  // 9. Lấy danh sách danh mục theo loại (income/expense)
+  // Dùng để hiển thị lên màn hình "Thêm giao dịch"
+  Future<List<CategoryModel>> getCategoriesByType(String type) async {
+    final db = await instance.database;
+    final result = await db.query(
+      'categories',
+      where: 'type = ?',
+      whereArgs: [type],
+    );
+    return result.map((json) => CategoryModel.fromMap(json)).toList();
+  }
+
+  // 10. Lấy tất cả danh mục ( Dùng cho màn hình Quản lý danh mục)
+  Future<List<CategoryModel>> getAllCategories() async {
+    final db = await instance.database;
+    final result = await db.query('categories');
+    return result.map((json) => CategoryModel.fromMap(json)).toList();
+  }
+
+  // 11. Thêm danh mục mới (Cho phép người dùng tạo)
+  Future<int> insertCategory(CategoryModel category) async {
+    final db = await instance.database;
+    return await db.insert('categories', category.toMap());
+  }
+
+  // 12. Xoá danh mục
+  Future<int> deleteCategory(int id) async {
+    final db = await instance.database;
+    // Lưu ý: Cần phải xử lý logic nếu xoá danh mục đã có giao dịch (có thể chặn hoặc chuyển giao dịch sang 'Khác')
+    return await db.delete('categories', where: 'id = ?', whereArgs: [id]);
   }
 }
