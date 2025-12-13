@@ -38,6 +38,7 @@ class DatabaseHelper {
       CREATE TABLE categories (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         name TEXT NOT NULL,
+        description TEXT,
         type TEXT NOT NULL,
         group_name TEXT NOT NULL,
         icon_key TEXT NOT NULL,
@@ -60,13 +61,13 @@ class DatabaseHelper {
     await _seedData(db);
   }
 
-  // Hàm nạp dữ liệu mẫu
-  Future _seedData(Database db) async {
+// Hàm nạp dữ liệu mẫu
+Future _seedData(Database db) async {
     final List<Map<String, dynamic>> categories = [
-      // --- CHI TIÊU (Expense) ---
-      // Nhóm: Thiết yếu
+      // --- CHI TIÊU (Expense) - NHÓM THIẾT YẾU ---
       {
         'name': 'Ăn uống',
+        'description': 'Ăn sáng 🍞, Ăn trưa 🥗, Ăn tối 🍟, Đi chợ 🛒...',
         'type': 'expense',
         'group_name': 'Thiết yếu',
         'icon_key': 'food',
@@ -74,6 +75,7 @@ class DatabaseHelper {
       },
       {
         'name': 'Đi lại',
+        'description': 'Xăng xe 🚗, Xe bus 🚌, Taxi 🚕, Grab 🚘...',
         'type': 'expense',
         'group_name': 'Thiết yếu',
         'icon_key': 'transport',
@@ -81,13 +83,15 @@ class DatabaseHelper {
       },
       {
         'name': 'Nhà cửa',
+        'description': 'Thuê nhà 🏠, Điện 💡, Nước 🚿, Internet 📶...',
         'type': 'expense',
         'group_name': 'Thiết yếu',
         'icon_key': 'house',
         'color_hex': '#BBDEFB',
-      }, 
+      },
       {
         'name': 'Hóa đơn',
+        'description': 'Hóa đơn 🧾, Sửa chữa nhà 🛠, Sửa chữa xe 🚗...',
         'type': 'expense',
         'group_name': 'Thiết yếu',
         'icon_key': 'bill',
@@ -95,22 +99,25 @@ class DatabaseHelper {
       },
       {
         'name': 'Sức khỏe',
+        'description': 'Khám bệnh 🩺, Thuốc men 💊, Bảo hiểm 🏥...',
         'type': 'expense',
         'group_name': 'Thiết yếu',
         'icon_key': 'health',
         'color_hex': '#FFCCBC',
-      }, 
+      },
 
-      // Nhóm: Cá nhân
+      // --- CHI TIÊU (Expense) - NHÓM CÁ NHÂN ---
       {
-        'name': 'Cà phê, trà đá',
+        'name': 'Cà phê',
+        'description': 'Trà đá 🍵, Cà phê ☕, Sinh tố 🍹, Trà sữa 🧋...',
         'type': 'expense',
         'group_name': 'Cá nhân',
         'icon_key': 'coffee',
         'color_hex': '#E1BEE7',
-      }, 
+      },
       {
         'name': 'Mua sắm',
+        'description': 'Quần áo 👕, Giày dép 👠, Phụ kiện 🕶...',
         'type': 'expense',
         'group_name': 'Cá nhân',
         'icon_key': 'shopping',
@@ -118,6 +125,7 @@ class DatabaseHelper {
       },
       {
         'name': 'Giải trí',
+        'description': 'Xem phim 🎬, Đĩa nhạc 🎧, Game 🎮...',
         'type': 'expense',
         'group_name': 'Cá nhân',
         'icon_key': 'game',
@@ -125,6 +133,7 @@ class DatabaseHelper {
       },
       {
         'name': 'Du lịch',
+        'description': 'Du lịch 🚗, Nghỉ dưỡng 🏖, Vé máy bay ✈...',
         'type': 'expense',
         'group_name': 'Cá nhân',
         'icon_key': 'travel',
@@ -132,6 +141,7 @@ class DatabaseHelper {
       },
       {
         'name': 'Phát triển bản thân',
+        'description': 'Mua khóa học 📖, Mua phần mềm 📱...',
         'type': 'expense',
         'group_name': 'Cá nhân',
         'icon_key': 'education',
@@ -139,29 +149,33 @@ class DatabaseHelper {
       },
       {
         'name': 'Gặp gỡ bạn bè',
+        'description': 'Ăn uống 🍽, Hát hò 🎤, Đi chơi 🎡...',
         'type': 'expense',
         'group_name': 'Cá nhân',
         'icon_key': 'friends',
         'color_hex': '#B3E5FC',
-      }, 
+      },
       {
         'name': 'Sách vở',
+        'description': 'Sách 📚, Vở 📒, Bút 🖊, Bút chì ✏...',
         'type': 'expense',
         'group_name': 'Cá nhân',
         'icon_key': 'book',
         'color_hex': '#FFCDD2',
-      }, 
+      },
       {
         'name': 'Dự tiệc',
+        'description': 'Tiệc cưới 💒, Tiệc sinh nhật 🎂, Tiệc lễ hội 🎉...',
         'type': 'expense',
         'group_name': 'Cá nhân',
         'icon_key': 'party',
         'color_hex': '#C8E6C9',
-      }, 
-     
-     // Nhóm: Tài chính
+      },
+
+      // --- CHI TIÊU (Expense) - NHÓM TÀI CHÍNH ---
       {
         'name': 'Tiết kiệm',
+        'description': 'Tiền gửi ngân hàng 💰, Tiền gửi heo đất 🐷...',
         'type': 'expense',
         'group_name': 'Tài chính',
         'icon_key': 'savings',
@@ -169,6 +183,7 @@ class DatabaseHelper {
       },
       {
         'name': 'Đầu tư',
+        'description': 'Đầu tư Đất đai 🏞, Đầu tư Chứng khoán 📈...',
         'type': 'expense',
         'group_name': 'Tài chính',
         'icon_key': 'invest',
@@ -176,6 +191,7 @@ class DatabaseHelper {
       },
       {
         'name': 'Trả nợ',
+        'description': 'Trả nợ cho người khác 💸',
         'type': 'expense',
         'group_name': 'Tài chính',
         'icon_key': 'pay_debt',
@@ -183,6 +199,7 @@ class DatabaseHelper {
       },
       {
         'name': 'Cho vay',
+        'description': 'Cho người khác vay tiền 🤝',
         'type': 'expense',
         'group_name': 'Tài chính',
         'icon_key': 'loan',
@@ -190,6 +207,7 @@ class DatabaseHelper {
       },
       {
         'name': 'Hỗ trợ gia đình',
+        'description': 'Hỗ trợ gia đình người thân 👨‍👩‍👧‍👦',
         'type': 'expense',
         'group_name': 'Tài chính',
         'icon_key': 'family',
@@ -197,6 +215,7 @@ class DatabaseHelper {
       },
       {
         'name': 'Ủng hộ từ thiện',
+        'description': 'Tiền quyên góp cho tổ chức ❤️',
         'type': 'expense',
         'group_name': 'Tài chính',
         'icon_key': 'charity',
@@ -206,6 +225,7 @@ class DatabaseHelper {
       // --- THU NHẬP (Income) ---
       {
         'name': 'Tiền lương',
+        'description': 'Lương nhận được từ công việc hàng tháng 💵',
         'type': 'income',
         'group_name': 'Thu nhập',
         'icon_key': 'salary',
@@ -213,25 +233,28 @@ class DatabaseHelper {
       },
       {
         'name': 'Làm thêm - Ngoài giờ',
+        'description': 'Lương nhận được từ làm thêm ⏰',
         'type': 'income',
         'group_name': 'Thu nhập',
         'icon_key': 'part_time',
         'color_hex': '#DCEDC8',
-      }, // Đã thêm từ ảnh
+      },
       {
         'name': 'Được trả nợ',
+        'description': 'Tiền nhận được từ việc được trả nợ 🔙',
         'type': 'income',
         'group_name': 'Thu nhập',
         'icon_key': 'debt_collection',
         'color_hex': '#B2DFDB',
-      }, // Đã thêm từ ảnh
+      },
       {
         'name': 'Thu nhập khác',
+        'description': 'Thu nhập từ các nguồn khác 🎁',
         'type': 'income',
         'group_name': 'Thu nhập',
         'icon_key': 'other_income',
         'color_hex': '#FFE0B2',
-      }, // Đã thêm từ ảnh
+      },
     ];
 
     for (var cat in categories) {

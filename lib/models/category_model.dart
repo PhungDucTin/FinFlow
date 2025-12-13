@@ -1,6 +1,7 @@
 class CategoryModel {
   final int? id; //Mã định danh (Tự động tăng)
   final String name; //Tên: Ăn uống, Lương,..
+  final String? description; //Mô tả danh mục
   final String type; //Loại: Thu nhập hoặc Chi tiêu ( 'income' | 'expense' )
   final String groupName; //Nhóm danh mục: Mặc định hoặc Tùy chỉnh
   final String iconKey;
@@ -10,6 +11,7 @@ class CategoryModel {
   CategoryModel({
     this.id,
     required this.name,
+    this.description,
     required this.type,
     required this.groupName,
     required this.iconKey,
@@ -21,6 +23,7 @@ class CategoryModel {
     return CategoryModel(
       id: map['id'],
       name: map['name'],
+      description: map['description'],
       type: map['type'],
       groupName: map['group_name'],
       iconKey: map['icon_key'],
@@ -33,10 +36,11 @@ class CategoryModel {
     return {
       'id': id,
       'name': name,
+      'description': description,
       'type': type,
-      'groupName': groupName,
-      'iconKey': iconKey,
-      'colorHex': colorHex,
+      'group_name': groupName,
+      'icon_key': iconKey,
+      'color_hex': colorHex,
     };
   }
 }
