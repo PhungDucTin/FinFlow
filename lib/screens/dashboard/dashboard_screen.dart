@@ -14,6 +14,9 @@ class DashboardScreen extends StatefulWidget {
 }
 
 class _DashboardScreenState extends State<DashboardScreen> {
+  // Local UI state for tabs and bottom nav
+  int _selectedFilterIndex = 0; // 0 = expense, 1 = income
+  int _selectedBottomIndex = 0;
   @override
   void initState() {
     super.initState();
@@ -26,74 +29,150 @@ class _DashboardScreenState extends State<DashboardScreen> {
   Widget build(BuildContext context) {
     // Lắng nghe dữ liệu từ Provider
     final provider = context.watch<TransactionProvider>();
+    final filteredTransactions = provider.transactions.where((t) {
+      if (_selectedFilterIndex == 0) return t.type == 'expense';
+      return t.type == 'income';
+    }).toList();
     final formatter = NumberFormat.currency(locale: 'vi_VN', symbol: 'đ');
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text("FinFlow", style: TextStyle(color: Colors.white)),
-        backgroundColor: AppColors.primary,
-        centerTitle: true,
-      ),
-      body: Column(
+      backgroundColor: AppColors.background,
+      body: SafeArea(
+        child: Stack(
+          children: [
+            Column(
         children: [
-          // 1. THẺ TỔNG QUAN (Balance Card)
-          Container(
-            margin: const EdgeInsets.all(16),
-            padding: const EdgeInsets.all(20),
-            decoration: BoxDecoration(
-              color: AppColors.primary,
-              borderRadius: BorderRadius.circular(15),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black26,
-                  blurRadius: 10,
-                  offset: Offset(0, 5),
+            // Top gradient header + tabs
+            Container(
+              padding: const EdgeInsets.only(bottom: 20),
+              decoration: BoxDecoration(
+                gradient: const LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [AppColors.primary, AppColors.accent],
                 ),
-              ],
-            ),
-            child: Column(
-              children: [
-                const Text(
-                  "Tổng số dư",
-                  style: TextStyle(color: Colors.white70, fontSize: 16),
+                borderRadius: const BorderRadius.only(
+                  bottomLeft: Radius.circular(20),
+                  bottomRight: Radius.circular(20),
                 ),
-                const SizedBox(height: 10),
-                Text(
-                  formatter.format(provider.balance), // Lấy số dư từ Provider
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 30,
-                    fontWeight: FontWeight.bold,
+              ),
+              child: Column(
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              children: const [
+                                Text('Theo ngày', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 18)),
+                                SizedBox(width: 6),
+                                Icon(Icons.arrow_drop_down, color: Colors.white, size: 24),
+                              ],
+                            ),
+                            const SizedBox(height: 4),
+                            const Text('Hôm nay', style: TextStyle(color: Colors.white70)),
+                          ],
+                        ),
+                        // Calendar Icon
+                        Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            color: Colors.white24,
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: const Icon(Icons.calendar_today, color: Colors.white),
+                        ),
+                      ],
+                    ),
                   ),
-                ),
-                const SizedBox(height: 20),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    _buildSummaryItem(
-                      "Thu nhập",
-                      provider.totalIncome,
-                      Colors.greenAccent,
-                    ),
-                    _buildSummaryItem(
-                      "Chi tiêu",
-                      provider.totalExpense,
-                      Colors.redAccent,
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
 
-          // 2. DANH SÁCH GIAO DỊCH
+                  // Tab selectors
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: GestureDetector(
+                            onTap: () => setState(() => _selectedFilterIndex = 0),
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(vertical: 14),
+                              decoration: BoxDecoration(
+                                color: _selectedFilterIndex == 0 ? Colors.white : Colors.transparent,
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  const Icon(Icons.arrow_upward, color: Colors.orange),
+                                  const SizedBox(width: 8),
+                                  Text('Khoản chi tiêu', style: TextStyle(color: _selectedFilterIndex == 0 ? AppColors.primary : Colors.white)),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: GestureDetector(
+                            onTap: () => setState(() => _selectedFilterIndex = 1),
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(vertical: 14),
+                              decoration: BoxDecoration(
+                                color: _selectedFilterIndex == 1 ? Colors.white : Colors.transparent,
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  const Icon(Icons.arrow_downward, color: Colors.blueAccent),
+                                  const SizedBox(width: 8),
+                                  Text('Khoản thu về', style: TextStyle(color: _selectedFilterIndex == 1 ? AppColors.primary : Colors.white)),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
+          // 2. DANH SÁCH GIAO DỊCH / or Empty State
           Expanded(
-            child: provider.transactions.isEmpty
-                ? const Center(child: Text("Chưa có giao dịch trong tháng này"))
+            child: filteredTransactions.isEmpty
+                ? Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      // Placeholder illustration
+                      Container(
+                        height: 280,
+                        padding: const EdgeInsets.symmetric(horizontal: 32),
+                        child: Center(
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: const [
+                              Icon(Icons.inbox_rounded, size: 140, color: Color(0xFFB8E6DD)),
+                              SizedBox(height: 16),
+                              Text('Không có dữ liệu', style: TextStyle(fontSize: 18, color: Colors.black54, fontWeight: FontWeight.bold)),
+                              SizedBox(height: 6),
+                              Text('Hãy thêm chi tiêu & thu nhập ...', style: TextStyle(color: Colors.black54)),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
+                  )
                 : ListView.builder(
-                    itemCount: provider.transactions.length,
+                    itemCount: filteredTransactions.length,
+                  padding: const EdgeInsets.only(bottom: 120),
                     itemBuilder: (context, index) {
-                      final transaction = provider.transactions[index];
+                      final transaction = filteredTransactions[index];
                       final isExpense = transaction.type == 'expense';
 
                       // --- SỬA TỪ ĐÂY: Bọc Card trong Dismissible ---
@@ -234,6 +313,44 @@ class _DashboardScreenState extends State<DashboardScreen> {
           ),
         ],
       ),
+
+          // Bottom navigation and FAB area handled in Stack below so it overlaps content
+          Positioned(
+            left: 0,
+            right: 0,
+            bottom: 0,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // Small spacing above bottom nav
+                const SizedBox(height: 6),
+                // Bottom navigation
+                Container(
+                  margin: const EdgeInsets.symmetric(horizontal: 8),
+                  padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 10),
+                  decoration: BoxDecoration(
+                    color: AppColors.primary,
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    children: [
+                      _buildBottomItem(0, Icons.grid_view, 'Tổng hợp'),
+                      _buildBottomItem(1, Icons.pie_chart_outline, 'Thống kê'),
+                      const SizedBox(width: 48), // Space for FAB
+                      _buildBottomItem(2, Icons.calendar_today, 'Lịch'),
+                      _buildBottomItem(3, Icons.person_outline, 'Tài khoản'),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 12),
+              ],
+            ),
+          ),
+        ],
+      ),
+      ),
+      floatingActionButtonLocation: FloatingActionButtonLocation.endDocked,
       floatingActionButton: FloatingActionButton(
         onPressed: () {
           // Chuyển sang màn hình Thêm giao dịch
@@ -266,6 +383,28 @@ class _DashboardScreenState extends State<DashboardScreen> {
           ),
         ),
       ],
+    );
+  }
+
+  Widget _buildBottomItem(int index, IconData icon, String label) {
+    final isSelected = _selectedBottomIndex == index;
+    return GestureDetector(
+      onTap: () => setState(() => _selectedBottomIndex = index),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 6),
+        decoration: BoxDecoration(
+          color: isSelected ? Colors.white24 : Colors.transparent,
+          borderRadius: BorderRadius.circular(10),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, color: isSelected ? Colors.white : Colors.white70),
+            const SizedBox(height: 4),
+            Text(label, style: TextStyle(color: isSelected ? Colors.white : Colors.white70, fontSize: 12)),
+          ],
+        ),
+      ),
     );
   }
 }
