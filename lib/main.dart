@@ -6,6 +6,7 @@ import 'package:intl/date_symbol_data_local.dart';
 
 import 'configs/constants.dart';
 import 'view_models/transaction_provider.dart';
+import 'view_models/category_provider.dart';
 import 'screens/dashboard/dashboard_screen.dart'; // Chúng ta sẽ tạo file này ở bước 3
 
 void main() async {
@@ -26,6 +27,7 @@ void main() async {
     MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (_) => TransactionProvider()),
+        ChangeNotifierProvider(create: (_) => CategoryProvider()..loadAll()),
       ],
       child: const MyApp(),
     ),

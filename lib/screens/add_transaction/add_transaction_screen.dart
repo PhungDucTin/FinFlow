@@ -6,6 +6,7 @@ import '../../models/transaction_model.dart';
 import '../../services/database_helper.dart';
 import '../../view_models/transaction_provider.dart';
 import '../../configs/constants.dart';
+import '../categories/add_category_dialog.dart';
 
 class AddTransactionScreen extends StatefulWidget {
   const AddTransactionScreen({super.key});
@@ -162,11 +163,30 @@ class _AddTransactionScreenState extends State<AddTransactionScreen>
           ),
           
           const SizedBox(height: 10),
-          const Padding(
-            padding: EdgeInsets.only(left: 16, bottom: 8),
-            child: Align(
-              alignment: Alignment.centerLeft,
-              child: Text("Danh mục", style: TextStyle(fontWeight: FontWeight.bold, color: Colors.grey)),
+          Padding(
+            padding: const EdgeInsets.only(left: 16, bottom: 8, right: 8),
+            child: Row(
+              children: [
+                const Expanded(
+                  child: Align(
+                    alignment: Alignment.centerLeft,
+                    child: Text("Danh mục", style: TextStyle(fontWeight: FontWeight.bold, color: Colors.grey)),
+                  ),
+                ),
+                IconButton(
+                  tooltip: 'Tạo danh mục mới',
+                  icon: const Icon(Icons.add),
+                  onPressed: () async {
+                    // show dialog to create new category
+                    final createdId = await showAddCategoryDialog(context, initialType: _tabController.index == 0 ? 'expense' : 'income');
+                    if (createdId != null) {
+                      // reload categories and select new one
+                      _loadCategories(_tabController.index == 0 ? 'expense' : 'income');
+                      setState(() => _selectedCategoryId = createdId);
+                    }
+                  },
+                )
+              ],
             ),
           ),
 
