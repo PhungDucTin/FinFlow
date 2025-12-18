@@ -18,6 +18,9 @@ dependencies:
   flutter:
     sdk: flutter
 
+  flutter_localizations: 
+    sdk: flutter
+
   #Icons & Fonts
   cupertino_icons: ^1.0.8
   google_fonts: ^6.3.3
@@ -40,11 +43,13 @@ dependencies:
   #UI Charts
   fl_chart: ^1.1.1
 
+
 dev_dependencies:
   flutter_test:
     sdk: flutter
 
   flutter_lints: ^6.0.0
+
 
 flutter:
   uses-material-design: true

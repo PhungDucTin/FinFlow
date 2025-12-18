@@ -93,25 +93,44 @@ class AuthService {
 
   // Xử lý lỗi Firebase Auth
   String _handleAuthException(FirebaseAuthException e) {
+    print("Mã lỗi Firebase: ${e.code}"); // In ra log để dễ Debug nếu gặp lỗi lạ
+
     switch (e.code) {
-      case 'weak-password':
-        return 'Mật khẩu quá yếu. Vui lòng chọn mật khẩu mạnh hơn.';
+      // --- Nhóm Đăng ký / Đăng nhập ---
       case 'email-already-in-use':
-        return 'Email này đã được đăng ký. Vui lòng đăng nhập hoặc sử dụng email khác.';
+        return 'Email này đã được đăng ký. Vui lòng đăng nhập.';
       case 'invalid-email':
-        return 'Email không hợp lệ.';
+        return 'Định dạng email không hợp lệ.';
+      case 'weak-password':
+        return 'Mật khẩu quá yếu. Vui lòng chọn mật khẩu mạnh hơn (trên 6 ký tự).';
       case 'user-disabled':
-        return 'Tài khoản này đã bị vô hiệu hóa.';
+        return 'Tài khoản này đã bị vô hiệu hóa bởi Admin.';
       case 'user-not-found':
-        return 'Email không tồn tại. Vui lòng đăng ký.';
+        return 'Không tìm thấy tài khoản với email này.';
       case 'wrong-password':
         return 'Mật khẩu không chính xác.';
+      case 'invalid-credential': // Lỗi chung cho user-not-found hoặc wrong-password (bảo mật mới)
+        return 'Email hoặc mật khẩu không chính xác.';
+      
+      // --- Nhóm Cấu hình & Hệ thống ---
+      case 'operation-not-allowed':
+        return 'Lỗi hệ thống: Tính năng đăng nhập này chưa được bật trên Firebase Console.';
+      case 'requires-recent-login':
+        return 'Phiên đăng nhập đã hết hạn. Vui lòng đăng xuất và đăng nhập lại để thực hiện.';
+      
+      // --- Nhóm Mạng & Quên mật khẩu ---
       case 'too-many-requests':
-        return 'Quá nhiều lần thử. Vui lòng thử lại sau.';
+        return 'Bạn đã thử quá nhiều lần. Vui lòng thử lại sau ít phút.';
       case 'network-request-failed':
-        return 'Lỗi kết nối. Vui lòng kiểm tra internet.';
+        return 'Không có kết nối Internet. Vui lòng kiểm tra lại Wifi/4G.';
+      case 'invalid-verification-code':
+        return 'Mã xác thực không hợp lệ.';
+      case 'expired-action-code':
+        return 'Mã xác thực hoặc liên kết đã hết hạn.';
+
+      // --- Mặc định ---
       default:
-        return 'Lỗi: ${e.message}';
+        return 'Lỗi không xác định: ${e.message}';
     }
   }
 }

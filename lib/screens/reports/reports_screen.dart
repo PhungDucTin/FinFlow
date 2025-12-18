@@ -3,6 +3,7 @@ import 'package:finflow/services/database_helper.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 class ReportsScreen extends StatefulWidget {
   const ReportsScreen({super.key});
@@ -25,7 +26,13 @@ class _ReportsScreenState extends State<ReportsScreen> {
   }
 
   Future<void> _loadData() async {
+    // 1. Lấy User ID hiện tại 
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return; // Nếu chưa đăng nhập thì không làm gì cả
+    final userId = user.uid;
+
     setState(() => _isLoading = true);
+    
     final start = DateTime(_currentMonth.year, _currentMonth.month, 1);
     final end = DateTime(_currentMonth.year, _currentMonth.month + 1, 0);
 
@@ -34,6 +41,7 @@ class _ReportsScreenState extends State<ReportsScreen> {
       'expense',
       start,
       end,
+      userId,
     );
 
     // Tổng thu / chi
@@ -41,11 +49,13 @@ class _ReportsScreenState extends State<ReportsScreen> {
       'income',
       start,
       end,
+      userId,
     );
     final totalExpense = await DatabaseHelper.instance.calculateTotal(
       'expense',
       start,
       end,
+      userId,
     );
 
     if (!mounted) return;

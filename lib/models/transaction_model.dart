@@ -1,5 +1,6 @@
 class TransactionModel {
   final int? id;
+  final String? userId;
   final double amount; // Số tiền
   final String note; //Ghi chú
   final DateTime date; //Ngày giao dịch
@@ -13,6 +14,7 @@ class TransactionModel {
 
   TransactionModel({
     this.id,
+    this.userId,
     required this.amount,
     required this.note,
     required this.date,
@@ -27,6 +29,7 @@ class TransactionModel {
   factory TransactionModel.fromMap(Map<String, dynamic> map) {
     return TransactionModel(
       id: map['id'],
+      userId: map['user_id'],
       amount: map['amount'],
       note: map['note'],
       // SQLite lưu ngày dưới dạng chữ (String), cần chuyển lại thành DateTime
@@ -44,6 +47,7 @@ class TransactionModel {
   Map<String, dynamic> toMap() {
     return {
       'id': id,
+      'user_id': userId,
       'amount': amount,
       'note': note,
       // Chuyển DateTime thành String để lưu vào SQLite
