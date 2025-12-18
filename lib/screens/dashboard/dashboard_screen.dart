@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 import '../add_transaction/add_transaction_screen.dart';
+import '../reports/reports_screen.dart';
+import '../settings/settings_screen.dart';
 import '../../../view_models/transaction_provider.dart';
 import '../../../configs/constants.dart';
 
@@ -33,6 +35,32 @@ class _DashboardScreenState extends State<DashboardScreen> {
         title: const Text("FinFlow", style: TextStyle(color: Colors.white)),
         backgroundColor: AppColors.primary,
         centerTitle: true,
+        actions: [
+          IconButton(
+            tooltip: 'Báo cáo',
+            icon: const Icon(Icons.pie_chart, color: Colors.white),
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const ReportsScreen(),
+                ),
+              );
+            },
+          ),
+          IconButton(
+            tooltip: 'Cài đặt',
+            icon: const Icon(Icons.settings, color: Colors.white),
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const SettingsScreen(),
+                ),
+              );
+            },
+          ),
+        ],
       ),
       body: Column(
         children: [
