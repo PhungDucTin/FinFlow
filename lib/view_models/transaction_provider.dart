@@ -1,3 +1,4 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import '../models/transaction_model.dart';
 import '../services/database_helper.dart';
@@ -11,6 +12,11 @@ class TransactionProvider with ChangeNotifier {
   double _totalExpense = 0.0;
   double _balance = 0.0;
 
+  String get _currentUserId {
+    final user = FirebaseAuth.instance.currentUser;
+    return user?.uid ?? '';
+  }
+
   //Getter để UI lấy dữ liệu
   List<TransactionModel> get transactions => _transactions;
   double get totalIncome => _totalIncome;
@@ -19,15 +25,19 @@ class TransactionProvider with ChangeNotifier {
 
   // 1. Hàm tải dữ liệu ban đầu (Gọi khi mở app)
   Future<void> loadData() async {
+    if(_currentUserId.isEmpty) return; // Nếu chưa đăng nhập, không tải dữ liệu
     await loadTransactionsByMonth(DateTime.now());
   }
 
   // 2. Tải giao dịch theo tháng (Dùng cho Dashboard và Lịch)
   Future<void> loadTransactionsByMonth(DateTime date) async {
+    if (_currentUserId.isEmpty) return; // Nếu chưa đăng nhập, không tải dữ liệu
+
     // Gọi DatabaseHelper
     _transactions = await DatabaseHelper.instance.getTransactionsByMonth(
       date.month,
       date.year,
+      _currentUserId,
     );
 
     // Tính toán lại tổng tiền ngay sau khi lấy dữ liệu
@@ -61,11 +71,13 @@ class TransactionProvider with ChangeNotifier {
       'income',
       start,
       end,
+      _currentUserId,
     );
     _totalExpense = await DatabaseHelper.instance.calculateTotal(
       'expense',
       start,
       end,
+      _currentUserId,
     );
     _balance = _totalIncome - _totalExpense;
   }

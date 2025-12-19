@@ -49,6 +49,7 @@ class DatabaseHelper {
     await db.execute('''
       CREATE TABLE transactions (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
+        user_id Text,
         amount REAL NOT NULL,
         note TEXT NOT NULL,
         date TEXT NOT NULL,
@@ -67,193 +68,193 @@ Future _seedData(Database db) async {
       // --- CHI TIÊU (Expense) - NHÓM THIẾT YẾU ---
       {
         'name': 'Ăn uống',
-        'description': 'Ăn sáng 🍞, Ăn trưa 🥗, Ăn tối 🍟, Đi chợ 🛒...',
+        'description': 'Ăn sáng, trưa, tối...',
         'type': 'expense',
         'group_name': 'Thiết yếu',
         'icon_key': 'food',
-        'color_hex': '#FFE0B2',
+        'color_hex': '#FF9800', // Cam đậm (Thay vì #FFE0B2)
       },
       {
         'name': 'Đi lại',
-        'description': 'Xăng xe 🚗, Xe bus 🚌, Taxi 🚕, Grab 🚘...',
+        'description': 'Xăng xe, taxi, bus...',
         'type': 'expense',
         'group_name': 'Thiết yếu',
         'icon_key': 'transport',
-        'color_hex': '#F8BBD0',
+        'color_hex': '#F06292', // Hồng đậm
       },
       {
         'name': 'Nhà cửa',
-        'description': 'Thuê nhà 🏠, Điện 💡, Nước 🚿, Internet 📶...',
+        'description': 'Tiền nhà, điện nước...',
         'type': 'expense',
         'group_name': 'Thiết yếu',
         'icon_key': 'house',
-        'color_hex': '#BBDEFB',
+        'color_hex': '#42A5F5', // Xanh dương đậm
       },
       {
         'name': 'Hóa đơn',
-        'description': 'Hóa đơn 🧾, Sửa chữa nhà 🛠, Sửa chữa xe 🚗...',
+        'description': 'Internet, sửa chữa...',
         'type': 'expense',
         'group_name': 'Thiết yếu',
         'icon_key': 'bill',
-        'color_hex': '#B2DFDB',
+        'color_hex': '#26C6DA', // Xanh ngọc đậm
       },
       {
         'name': 'Sức khỏe',
-        'description': 'Khám bệnh 🩺, Thuốc men 💊, Bảo hiểm 🏥...',
+        'description': 'Thuốc men, khám bệnh...',
         'type': 'expense',
         'group_name': 'Thiết yếu',
         'icon_key': 'health',
-        'color_hex': '#FFCCBC',
+        'color_hex': '#FF7043', // Cam đỏ đậm
       },
 
       // --- CHI TIÊU (Expense) - NHÓM CÁ NHÂN ---
       {
         'name': 'Cà phê',
-        'description': 'Trà đá 🍵, Cà phê ☕, Sinh tố 🍹, Trà sữa 🧋...',
+        'description': 'Trà, cafe, sinh tố...',
         'type': 'expense',
         'group_name': 'Cá nhân',
         'icon_key': 'coffee',
-        'color_hex': '#E1BEE7',
+        'color_hex': '#8D6E63', // Nâu đậm
       },
       {
         'name': 'Mua sắm',
-        'description': 'Quần áo 👕, Giày dép 👠, Phụ kiện 🕶...',
+        'description': 'Quần áo, giày dép...',
         'type': 'expense',
         'group_name': 'Cá nhân',
         'icon_key': 'shopping',
-        'color_hex': '#C5CAE9',
+        'color_hex': '#7E57C2', // Tím đậm
       },
       {
         'name': 'Giải trí',
-        'description': 'Xem phim 🎬, Đĩa nhạc 🎧, Game 🎮...',
+        'description': 'Xem phim, game...',
         'type': 'expense',
         'group_name': 'Cá nhân',
         'icon_key': 'game',
-        'color_hex': '#FFCDD2',
+        'color_hex': '#EC407A', // Hồng tím đậm
       },
       {
         'name': 'Du lịch',
-        'description': 'Du lịch 🚗, Nghỉ dưỡng 🏖, Vé máy bay ✈...',
+        'description': 'Vé máy bay, khách sạn...',
         'type': 'expense',
         'group_name': 'Cá nhân',
         'icon_key': 'travel',
-        'color_hex': '#FFF9C4',
+        'color_hex': '#FBC02D', // Vàng đậm (Thay vì vàng nhạt)
       },
       {
-        'name': 'Phát triển bản thân',
-        'description': 'Mua khóa học 📖, Mua phần mềm 📱...',
+        'name': 'Phát triển',
+        'description': 'Khóa học, sách...',
         'type': 'expense',
         'group_name': 'Cá nhân',
         'icon_key': 'education',
-        'color_hex': '#E1BEE7',
+        'color_hex': '#AB47BC', // Tím hồng đậm
       },
       {
-        'name': 'Gặp gỡ bạn bè',
-        'description': 'Ăn uống 🍽, Hát hò 🎤, Đi chơi 🎡...',
+        'name': 'Bạn bè',
+        'description': 'Gặp gỡ, ăn uống...',
         'type': 'expense',
         'group_name': 'Cá nhân',
         'icon_key': 'friends',
-        'color_hex': '#B3E5FC',
+        'color_hex': '#29B6F6', // Xanh biển đậm
       },
       {
         'name': 'Sách vở',
-        'description': 'Sách 📚, Vở 📒, Bút 🖊, Bút chì ✏...',
+        'description': 'Sách, văn phòng phẩm...',
         'type': 'expense',
         'group_name': 'Cá nhân',
         'icon_key': 'book',
-        'color_hex': '#FFCDD2',
+        'color_hex': '#EF5350', // Đỏ nhạt đậm
       },
       {
         'name': 'Dự tiệc',
-        'description': 'Tiệc cưới 💒, Tiệc sinh nhật 🎂, Tiệc lễ hội 🎉...',
+        'description': 'Cưới hỏi, sinh nhật...',
         'type': 'expense',
         'group_name': 'Cá nhân',
         'icon_key': 'party',
-        'color_hex': '#C8E6C9',
+        'color_hex': '#66BB6A', // Xanh lá đậm
       },
 
       // --- CHI TIÊU (Expense) - NHÓM TÀI CHÍNH ---
       {
         'name': 'Tiết kiệm',
-        'description': 'Tiền gửi ngân hàng 💰, Tiền gửi heo đất 🐷...',
+        'description': 'Gửi ngân hàng...',
         'type': 'expense',
         'group_name': 'Tài chính',
         'icon_key': 'savings',
-        'color_hex': '#F06292',
+        'color_hex': '#D81B60', // Hồng mận đậm
       },
       {
         'name': 'Đầu tư',
-        'description': 'Đầu tư Đất đai 🏞, Đầu tư Chứng khoán 📈...',
+        'description': 'Chứng khoán, đất đai...',
         'type': 'expense',
         'group_name': 'Tài chính',
         'icon_key': 'invest',
-        'color_hex': '#F44336',
+        'color_hex': '#C62828', // Đỏ đậm
       },
       {
         'name': 'Trả nợ',
-        'description': 'Trả nợ cho người khác 💸',
+        'description': 'Trả tiền nợ...',
         'type': 'expense',
         'group_name': 'Tài chính',
         'icon_key': 'pay_debt',
-        'color_hex': '#9575CD',
+        'color_hex': '#5C6BC0', // Xanh chàm đậm
       },
       {
         'name': 'Cho vay',
-        'description': 'Cho người khác vay tiền 🤝',
+        'description': 'Cho người khác vay...',
         'type': 'expense',
         'group_name': 'Tài chính',
         'icon_key': 'loan',
-        'color_hex': '#4DB6AC',
+        'color_hex': '#009688', // Xanh Teal đậm
       },
       {
-        'name': 'Hỗ trợ gia đình',
-        'description': 'Hỗ trợ gia đình người thân 👨‍👩‍👧‍👦',
+        'name': 'Gia đình',
+        'description': 'Biếu bố mẹ...',
         'type': 'expense',
         'group_name': 'Tài chính',
         'icon_key': 'family',
-        'color_hex': '#FFB74D',
+        'color_hex': '#FFCA28', // Vàng cam đậm
       },
       {
-        'name': 'Ủng hộ từ thiện',
-        'description': 'Tiền quyên góp cho tổ chức ❤️',
+        'name': 'Từ thiện',
+        'description': 'Quyên góp...',
         'type': 'expense',
         'group_name': 'Tài chính',
         'icon_key': 'charity',
-        'color_hex': '#64B5F6',
+        'color_hex': '#42A5F5', // Xanh dương
       },
 
       // --- THU NHẬP (Income) ---
       {
-        'name': 'Tiền lương',
-        'description': 'Lương nhận được từ công việc hàng tháng 💵',
+        'name': 'Lương',
+        'description': 'Lương cứng...',
         'type': 'income',
         'group_name': 'Thu nhập',
         'icon_key': 'salary',
-        'color_hex': '#C8E6C9',
+        'color_hex': '#43A047', // Xanh lá cây đậm
       },
       {
-        'name': 'Làm thêm - Ngoài giờ',
-        'description': 'Lương nhận được từ làm thêm ⏰',
+        'name': 'Làm thêm',
+        'description': 'Freelance, ngoài giờ...',
         'type': 'income',
         'group_name': 'Thu nhập',
         'icon_key': 'part_time',
-        'color_hex': '#DCEDC8',
+        'color_hex': '#8BC34A', // Xanh nõn chuối đậm
       },
       {
         'name': 'Được trả nợ',
-        'description': 'Tiền nhận được từ việc được trả nợ 🔙',
+        'description': 'Thu hồi nợ...',
         'type': 'income',
         'group_name': 'Thu nhập',
         'icon_key': 'debt_collection',
-        'color_hex': '#B2DFDB',
+        'color_hex': '#00ACC1', // Xanh Cyan đậm
       },
       {
-        'name': 'Thu nhập khác',
-        'description': 'Thu nhập từ các nguồn khác 🎁',
+        'name': 'Khác',
+        'description': 'Nguồn thu khác...',
         'type': 'income',
         'group_name': 'Thu nhập',
         'icon_key': 'other_income',
-        'color_hex': '#FFE0B2',
+        'color_hex': '#FFA000', // Vàng cam đậm
       },
     ];
 
@@ -304,6 +305,7 @@ Future _seedData(Database db) async {
   Future<List<TransactionModel>> getTransactionsByMonth(
     int month,
     int year,
+    String userId,
   ) async {
     final db = await instance.database;
 
@@ -317,10 +319,10 @@ Future _seedData(Database db) async {
         SELECT t.*, c.name as category_name, c.icon_key, c.color_hex, c.type
         FROM transactions t
         INNER JOIN categories c ON t.category_id = c.id
-        WHERE t.date >= ? AND t.date <= ?
+        WHERE t.user_id = ? AND t.date >= ? AND t.date <= ?
         ORDER BY t.date DESC
       ''',
-      [startDate, endDate],
+      [userId,startDate, endDate],
     );
     return result.map((json) => TransactionModel.fromMap(json)).toList();
   }
@@ -355,6 +357,7 @@ Future _seedData(Database db) async {
     String type,
     DateTime start,
     DateTime end,
+    String userId,
   ) async {
     final db = await instance.database;
 
@@ -367,9 +370,9 @@ Future _seedData(Database db) async {
       SELECT SUM(t.amount) as total
       FROM transactions t 
       INNER JOIN categories c ON t.category_id = c.id
-      WHERE c.type = ? AND t.date >= ? AND t.date <= ?
+      WHERE t.user_id = ? AND c.type = ? AND t.date >= ? AND t.date <= ?
 ''',
-      [type, startDateStr, endDateStr],
+      [userId,type, startDateStr, endDateStr],
     );
 
     if (result.first['total'] != null) {
@@ -383,6 +386,7 @@ Future _seedData(Database db) async {
     String type,
     DateTime start,
     DateTime end,
+    String userId,
   ) async {
     final db = await instance.database;
 
@@ -394,11 +398,11 @@ Future _seedData(Database db) async {
       SELECT c.name, c.color_hex, SUM(t.amount) as total
       FROM transactions t
       INNER JOIN categories c ON t.category_id = c.id
-      WHERE c.type = ? AND t.date >= ? AND t.date <= ?
+      WHERE t.user_id = ? AND c.type = ? AND t.date >= ? AND t.date <= ?
       GROUP BY c.id
       ORDER BY total DESC
 ''',
-      [type, startDateStr, endDateStr],
+      [userId, type, startDateStr, endDateStr],
     );
   }
 

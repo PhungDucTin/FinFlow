@@ -1,6 +1,8 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import '../../models/category_model.dart';
 import '../../models/transaction_model.dart';
 import '../../services/database_helper.dart';
@@ -64,7 +66,11 @@ class _AddTransactionScreenState extends State<AddTransactionScreen>
     final amount = double.tryParse(_amountController.text.replaceAll(RegExp(r'[^0-9]'), '')) ?? 0;
     final type = _tabController.index == 0 ? 'expense' : 'income';
 
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return; // Chưa đăng nhập thì không lưu được
+
     final newTransaction = TransactionModel(
+      userId: user.uid, 
       amount: amount,
       note: _noteController.text,
       date: _selectedDate,
@@ -175,47 +181,68 @@ class _AddTransactionScreenState extends State<AddTransactionScreen>
             child: _isLoading
                 ? const Center(child: CircularProgressIndicator())
                 : GridView.builder(
-                    padding: const EdgeInsets.all(10),
+                    padding: const EdgeInsets.all(16),
                     gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                       crossAxisCount: 4, // 4 cột
-                      childAspectRatio: 0.85,
+                      childAspectRatio: 0.75, // Tăng chiều cao một chút cho thoáng
+                      crossAxisSpacing: 12,
+                      mainAxisSpacing: 12,
                     ),
                     itemCount: _categories.length,
                     itemBuilder: (context, index) {
                       final cat = _categories[index];
                       final isSelected = cat.id == _selectedCategoryId;
+                      
+                      final catColor = getColorFromHex(cat.colorHex); 
+                      final catIcon = getIconByKey(cat.iconKey);
+                      
+                      // Lấy phiên bản đậm hơn của màu danh mục (Gọi hàm mới thêm)
+                      final darkerCatColor = getDarkerColor(catColor);
 
                       return GestureDetector(
                         onTap: () => setState(() => _selectedCategoryId = cat.id),
                         child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            Container(
-                              padding: const EdgeInsets.all(12),
+                            // Vòng tròn Icon (Animated cho mượt)
+                            AnimatedContainer(
+                              duration: const Duration(milliseconds: 200),
+                              height: 62, // Tăng kích thước một chút
+                              width: 62,
                               decoration: BoxDecoration(
-                                color: isSelected ? AppColors.primary : Colors.white,
                                 shape: BoxShape.circle,
-                                border: Border.all(
-                                  color: isSelected ? Colors.transparent : Colors.grey.shade300,
-                                ),
+                                // Nền: Nếu chọn -> Đậm. Nếu chưa -> Pastle trung bình (0.4)
+                                color: isSelected ? darkerCatColor : catColor.withOpacity(0.4),
+                                
+                                // Đổ bóng rực rỡ khi chọn
                                 boxShadow: isSelected
-                                    ? [BoxShadow(color: AppColors.primary.withOpacity(0.4), blurRadius: 8)]
+                                    ? [
+                                        BoxShadow(
+                                          color: darkerCatColor.withOpacity(0.5),
+                                          blurRadius: 12,
+                                          offset: const Offset(0, 4),
+                                        )
+                                      ]
                                     : [],
                               ),
                               child: Icon(
-                                // Tạm thời dùng icon mặc định, bạn có thể map iconKey sang IconData sau
-                                Icons.category, 
-                                color: isSelected ? Colors.white : Colors.grey.shade700,
+                                catIcon,
+                                // --- ĐIỂM NHẤN SÁC MÀU ---
+                                // Nếu chọn: Trắng. 
+                                // Nếu chưa: Tô Icon bằng màu ĐẬM đặc gốc của danh mục đó
+                                color: isSelected ? Colors.white : darkerCatColor, 
+                                size: 30, // Tăng kích thước icon
                               ),
                             ),
-                            const SizedBox(height: 5),
+                            const SizedBox(height: 8),
+                            // Tên danh mục
                             Text(
                               cat.name,
                               textAlign: TextAlign.center,
                               style: TextStyle(
-                                fontSize: 11,
-                                fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                                color: isSelected ? AppColors.primary : Colors.black87,
+                                fontSize: 12,
+                                // Chữ cũng đậm hơn chút cho rõ
+                                fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
+                                color: isSelected ? Colors.black : Colors.black87,
                               ),
                               maxLines: 2,
                               overflow: TextOverflow.ellipsis,
@@ -226,7 +253,7 @@ class _AddTransactionScreenState extends State<AddTransactionScreen>
                     },
                   ),
           ),
-
+          
           // 3. Nút Lưu
           Container(
             width: double.infinity,
