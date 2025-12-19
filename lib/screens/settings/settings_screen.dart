@@ -1,4 +1,5 @@
 import 'package:finflow/configs/constants.dart';
+import 'package:finflow/screens/settings/profile_detail_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../services/auth_service.dart';
@@ -19,8 +20,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
   @override
   Widget build(BuildContext context) {
     final user = AuthService().currentUser;
-    final balance =
-        context.watch<TransactionProvider>().balance; // Lấy số dư thực tế
+    final balance = context
+        .watch<TransactionProvider>()
+        .balance; // Lấy số dư thực tế
 
     return Scaffold(
       backgroundColor: const Color(0xFFE0F2F1), // Nền xanh mint nhạt
@@ -42,11 +44,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     radius: 40,
                     backgroundColor: AppColors.primary,
                     child: Text(
-                      (user?.displayName != null && user!.displayName!.isNotEmpty)
+                      (user?.displayName != null &&
+                              user!.displayName!.isNotEmpty)
                           ? user.displayName![0].toUpperCase()
                           : (user?.email != null && user!.email!.isNotEmpty)
-                              ? user.email![0].toUpperCase()
-                              : 'F',
+                          ? user.email![0].toUpperCase()
+                          : 'F',
                       style: const TextStyle(
                         fontSize: 32,
                         color: Colors.white,
@@ -66,10 +69,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   const SizedBox(height: 4),
                   Text(
                     user?.email ?? 'Chưa có email',
-                    style: const TextStyle(
-                      fontSize: 14,
-                      color: Colors.black54,
-                    ),
+                    style: const TextStyle(fontSize: 14, color: Colors.black54),
                   ),
                 ],
               ),
@@ -89,10 +89,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     children: [
                       const Text(
                         'Tổng số dư khả dụng',
-                        style: TextStyle(
-                          fontSize: 14,
-                          color: Colors.black54,
-                        ),
+                        style: TextStyle(fontSize: 14, color: Colors.black54),
                       ),
                       const SizedBox(height: 8),
                       Text(
@@ -116,9 +113,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 title: 'Thông tin cá nhân',
                 subtitle: 'Xem và chỉnh sửa thông tin tài khoản',
                 onTap: () {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Tính năng chỉnh sửa thông tin sẽ được bổ sung sau.'),
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => const ProfileDetailScreen(),
                     ),
                   );
                 },
@@ -131,9 +129,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 onTap: () {
                   Navigator.push(
                     context,
-                    MaterialPageRoute(
-                      builder: (_) => const ReportsScreen(),
-                    ),
+                    MaterialPageRoute(builder: (_) => const ReportsScreen()),
                   );
                 },
               ),
@@ -160,10 +156,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               const Center(
                 child: Text(
                   'App Version 1.0.0',
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: Colors.black45,
-                  ),
+                  style: TextStyle(fontSize: 12, color: Colors.black45),
                 ),
               ),
             ],
@@ -183,9 +176,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   }) {
     return Card(
       elevation: 2,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(14),
-      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
       child: InkWell(
         borderRadius: BorderRadius.circular(14),
         onTap: onTap,
@@ -195,11 +186,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
             children: [
               CircleAvatar(
                 radius: 20,
-                backgroundColor: (iconColor ?? AppColors.primary).withOpacity(0.1),
-                child: Icon(
-                  icon,
-                  color: iconColor ?? AppColors.primary,
+                backgroundColor: (iconColor ?? AppColors.primary).withOpacity(
+                  0.1,
                 ),
+                child: Icon(icon, color: iconColor ?? AppColors.primary),
               ),
               const SizedBox(width: 16),
               Expanded(
@@ -256,10 +246,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               ),
               const Text(
                 'Cài đặt',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                ),
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 8),
               SwitchListTile(
@@ -323,10 +310,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
           ),
           TextButton(
             onPressed: () => Navigator.pop(ctx, true),
-            child: const Text(
-              "Đồng ý",
-              style: TextStyle(color: Colors.red),
-            ),
+            child: const Text("Đồng ý", style: TextStyle(color: Colors.red)),
           ),
         ],
       ),
@@ -335,8 +319,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
     if (confirm == true) {
       await AuthService().signOut();
       if (context.mounted) {
-        Navigator.of(context)
-            .pushNamedAndRemoveUntil('/login', (route) => false);
+        Navigator.of(
+          context,
+        ).pushNamedAndRemoveUntil('/login', (route) => false);
       }
     }
   }

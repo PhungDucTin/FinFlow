@@ -154,6 +154,18 @@ class AuthService {
     }
   }
 
+Future<void> updateDisplayName(String newName) async {
+  try {
+    User? user = _firebaseAuth.currentUser;
+    if (user != null) {
+      await user.updateDisplayName(newName);
+      await user.reload();
+    }
+  } catch (e) {
+    throw 'Không thể cập nhật tên: $e';
+  }
+}
+
   // Xử lý lỗi Firebase Auth
   String _handleAuthException(FirebaseAuthException e) {
     print("Mã lỗi Firebase: ${e.code}"); // In ra log để dễ Debug nếu gặp lỗi lạ
