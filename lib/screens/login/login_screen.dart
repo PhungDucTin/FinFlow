@@ -232,9 +232,36 @@ class _LoginScreenState extends State<LoginScreen> {
                 const SizedBox(height: 20),
                 Row(
                   children: [
-                    Expanded(child: _buildSocialButton(Icons.g_mobiledata, "Google", Colors.red)),
-                    const SizedBox(width: 16),
-                    Expanded(child: _buildSocialButton(Icons.apple, "Apple", Colors.black)),
+                    Expanded(
+                      child: _buildSocialButton(
+                        Icons.g_mobiledata,
+                        "Google",
+                        Colors.red,
+                        () async {
+                          if (_isLoading) return;
+                          setState(() => _isLoading = true);
+                          try {
+                            await _authService.signInWithGoogle();
+                            if (mounted) {
+                              Navigator.pushReplacementNamed(
+                                context,
+                                '/dashboard',
+                              );
+                            }
+                          } catch (e) {
+                            if (mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(content: Text(e.toString())),
+                              );
+                            }
+                          } finally {
+                            if (mounted) {
+                              setState(() => _isLoading = false);
+                            }
+                          }
+                        },
+                      ),
+                    ),
                   ],
                 ),
 
@@ -301,21 +328,30 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   // Widget nút Social
-  Widget _buildSocialButton(IconData icon, String text, Color color) {
-    return Container(
-      height: 50,
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.grey[300]!),
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(icon, color: color, size: 28),
-          const SizedBox(width: 8),
-          Text(text, style: const TextStyle(fontWeight: FontWeight.bold)),
-        ],
+  Widget _buildSocialButton(
+    IconData icon,
+    String text,
+    Color color,
+    VoidCallback onTap,
+  ) {
+    return InkWell(
+      borderRadius: BorderRadius.circular(12),
+      onTap: onTap,
+      child: Container(
+        height: 50,
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: Colors.grey[300]!),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(icon, color: color, size: 28),
+            const SizedBox(width: 8),
+            Text(text, style: const TextStyle(fontWeight: FontWeight.bold)),
+          ],
+        ),
       ),
     );
   }

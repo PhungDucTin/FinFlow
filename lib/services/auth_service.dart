@@ -1,7 +1,14 @@
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:google_sign_in/google_sign_in.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 
 class AuthService {
   final FirebaseAuth _firebaseAuth = FirebaseAuth.instance;
+
+  // Client ID từ Firebase Console (Web Client ID)
+  // Bạn cần lấy từ: Firebase Console > Authentication > Sign-in method > Google > Web SDK configuration
+  // Hoặc: Google Cloud Console > APIs & Services > Credentials > OAuth 2.0 Client IDs (Web client)
+  static const String _webClientId = '910639759238-eeq2vhrq7qcvaees873a1lqsiekg6kfi.apps.googleusercontent.com';
 
   // Lấy user hiện tại
   User? get currentUser => _firebaseAuth.currentUser;
@@ -21,6 +28,62 @@ class AuthService {
       );
     } on FirebaseAuthException catch (e) {
       throw _handleAuthException(e);
+    }
+  }
+
+  /// Đăng nhập với Google
+  Future<UserCredential?> signInWithGoogle() async {
+    try {
+      // Khởi tạo GoogleSignIn với clientId (cho web) hoặc để null (cho mobile - tự động lấy từ google-services.json)
+      // Chỉ request scope 'email' để tránh cần People API (nếu chưa bật)
+      final GoogleSignIn googleSignIn = kIsWeb
+          ? GoogleSignIn(
+              clientId: _webClientId,
+              scopes: ['email'], // Chỉ cần email, không cần profile để tránh People API
+            )
+          : GoogleSignIn(
+              scopes: ['email'], // Chỉ cần email, không cần profile để tránh People API
+            );
+
+      // 1. Mở màn hình chọn tài khoản Google
+      final GoogleSignInAccount? googleUser = await googleSignIn.signIn();
+      if (googleUser == null) {
+        // Người dùng bấm Hủy
+        throw 'Đăng nhập Google đã bị hủy.';
+      }
+
+      // 2. Lấy token xác thực từ Google
+      final GoogleSignInAuthentication googleAuth =
+          await googleUser.authentication;
+
+      // 3. Tạo credential cho Firebase
+      final credential = GoogleAuthProvider.credential(
+        accessToken: googleAuth.accessToken,
+        idToken: googleAuth.idToken,
+      );
+
+      // 4. Đăng nhập Firebase bằng credential
+      final userCredential = await _firebaseAuth.signInWithCredential(credential);
+
+      // 5. Cập nhật displayName và photoURL từ Google nếu có (tùy chọn)
+      if (userCredential.user != null && googleUser.displayName != null) {
+        await userCredential.user?.updateDisplayName(googleUser.displayName);
+        if (googleUser.photoUrl != null) {
+          await userCredential.user?.updatePhotoURL(googleUser.photoUrl);
+        }
+        await userCredential.user?.reload();
+      }
+
+      return userCredential;
+    } on FirebaseAuthException catch (e) {
+      throw _handleAuthException(e);
+    } catch (e) {
+      // Xử lý lỗi People API một cách thân thiện
+      final errorString = e.toString();
+      if (errorString.contains('People API') || errorString.contains('SERVICE_DISABLED')) {
+        throw 'People API chưa được bật. Vui lòng bật tại:\nhttps://console.developers.google.com/apis/api/people.googleapis.com/overview?project=910639759238\n\nHoặc xem hướng dẫn trong file GOOGLE_SIGNIN_SETUP.md';
+      }
+      throw 'Không thể đăng nhập bằng Google: $e';
     }
   }
 
