@@ -1,4 +1,3 @@
-import 'package:flutter/rendering.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart';
 import '../models/category_model.dart';
@@ -26,8 +25,9 @@ class DatabaseHelper {
 
     return await openDatabase(
       path,
-      version: 1,
+      version: 2,
       onCreate: _createDB, // Gọi hàm khi chạy lần đầu tiên
+      onUpgrade: _upgradeDB,
     );
   }
 
@@ -61,9 +61,17 @@ class DatabaseHelper {
     await _seedData(db);
   }
 
-// Hàm nạp dữ liệu mẫu
-Future _seedData(Database db) async {
-    final List<Map<String, dynamic>> categories = [
+  // Hàm nạp dữ liệu mẫu
+  Future _seedData(Database db) async {
+    final categories = _defaultCategories();
+    for (var cat in categories) {
+      await db.insert('categories', cat);
+    }
+  }
+
+  // Trả về danh sách các danh mục mặc định
+  List<Map<String, dynamic>> _defaultCategories() {
+    return [
       // --- CHI TIÊU (Expense) - NHÓM THIẾT YẾU ---
       {
         'name': 'Ăn uống',
@@ -108,7 +116,7 @@ Future _seedData(Database db) async {
 
       // --- CHI TIÊU (Expense) - NHÓM CÁ NHÂN ---
       {
-        'name': 'Cà phê',
+        'name': 'Cà phê, trà đá',
         'description': 'Trà đá 🍵, Cà phê ☕, Sinh tố 🍹, Trà sữa 🧋...',
         'type': 'expense',
         'group_name': 'Cá nhân',
@@ -256,11 +264,31 @@ Future _seedData(Database db) async {
         'color_hex': '#FFE0B2',
       },
     ];
-
-    for (var cat in categories) {
-      await db.insert('categories', cat);
-    }
   }
+
+    // Thêm các danh mục còn thiếu khi nâng cấp DB
+    Future _addMissingCategories(Database db) async {
+      final categories = _defaultCategories();
+      for (var cat in categories) {
+        final existing = await db.query(
+          'categories',
+          columns: ['id'],
+          where: 'name = ? AND type = ?',
+          whereArgs: [cat['name'], cat['type']],
+          limit: 1,
+        );
+        if (existing.isEmpty) {
+          await db.insert('categories', cat);
+        }
+      }
+    }
+
+    // Hàm upgrade DB
+    Future _upgradeDB(Database db, int oldVersion, int newVersion) async {
+      if (oldVersion < 2 && newVersion >= 2) {
+        await _addMissingCategories(db);
+      }
+    }
 
   // --- CÁC HÀM ĐỂ GỌI KHI LÀM GIAO DIỆN (API LOCAL) ---
 

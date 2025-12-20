@@ -2,15 +2,24 @@ import 'package:finflow/screens/dashboard/dashboard_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:provider/provider.dart'; // Cần import gói này
-import 'package:intl/date_symbol_data_local.dart'; 
+import 'package:intl/date_symbol_data_local.dart';
+
+import 'dart:io' show Platform;
+import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
 import 'configs/constants.dart';
 import 'view_models/transaction_provider.dart';
 import 'view_models/category_provider.dart';
-import 'screens/dashboard/dashboard_screen.dart'; // Chúng ta sẽ tạo file này ở bước 3
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  // Initialize sqflite ffi for desktop platforms (Windows/Linux/macOS)
+  if (!kIsWeb && (Platform.isWindows || Platform.isLinux || Platform.isMacOS)) {
+    sqfliteFfiInit();
+    databaseFactory = databaseFactoryFfi;
+  }
   
   // Khởi tạo Firebase
   try {

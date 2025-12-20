@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../models/category_model.dart';
 import '../../view_models/category_provider.dart';
-import '../../configs/constants.dart';
 
 // Returns created category id on success, or null if cancelled
 Future<int?> showAddCategoryDialog(BuildContext context, {String initialType = 'expense'}) {
@@ -111,9 +110,14 @@ Future<int?> showAddCategoryDialog(BuildContext context, {String initialType = '
                 iconKey: _iconKey,
                 colorHex: _colorHex,
               );
-              final provider = context.read<CategoryProvider>();
-              final id = await provider.addCategory(category);
-              Navigator.pop(context, id);
+              try {
+                final provider = context.read<CategoryProvider>();
+                final id = await provider.addCategory(category);
+                Navigator.pop(context, id);
+              } catch (e, st) {
+                debugPrint('Failed to create category: $e\n$st');
+                ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Lỗi khi tạo danh mục: $e')));
+              }
             },
             child: const Text('Tạo'),
           ),

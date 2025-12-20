@@ -17,6 +17,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
   // Local UI state for tabs and bottom nav
   int _selectedFilterIndex = 0; // 0 = expense, 1 = income
   int _selectedBottomIndex = 0;
+  bool _isGridView = false;
   @override
   void initState() {
     super.initState();
@@ -33,7 +34,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
       if (_selectedFilterIndex == 0) return t.type == 'expense';
       return t.type == 'income';
     }).toList();
-    final formatter = NumberFormat.currency(locale: 'vi_VN', symbol: 'đ');
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -90,51 +90,63 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     ),
                   ),
 
-                  // Tab selectors
+                  // Tab selectors + view toggle
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                     child: Row(
                       children: [
                         Expanded(
-                          child: GestureDetector(
-                            onTap: () => setState(() => _selectedFilterIndex = 0),
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(vertical: 14),
-                              decoration: BoxDecoration(
-                                color: _selectedFilterIndex == 0 ? Colors.white : Colors.transparent,
-                                borderRadius: BorderRadius.circular(8),
+                          child: Row(
+                            children: [
+                              Expanded(
+                                child: GestureDetector(
+                                  onTap: () => setState(() => _selectedFilterIndex = 0),
+                                  child: Container(
+                                    padding: const EdgeInsets.symmetric(vertical: 14),
+                                    decoration: BoxDecoration(
+                                      color: _selectedFilterIndex == 0 ? Colors.white : Colors.transparent,
+                                      borderRadius: BorderRadius.circular(8),
+                                    ),
+                                    child: Row(
+                                      mainAxisAlignment: MainAxisAlignment.center,
+                                      children: [
+                                        const Icon(Icons.arrow_upward, color: Colors.orange),
+                                        const SizedBox(width: 8),
+                                        Text('Khoản chi tiêu', style: TextStyle(color: _selectedFilterIndex == 0 ? AppColors.primary : Colors.white)),
+                                      ],
+                                    ),
+                                  ),
+                                ),
                               ),
-                              child: Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  const Icon(Icons.arrow_upward, color: Colors.orange),
-                                  const SizedBox(width: 8),
-                                  Text('Khoản chi tiêu', style: TextStyle(color: _selectedFilterIndex == 0 ? AppColors.primary : Colors.white)),
-                                ],
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: GestureDetector(
+                                  onTap: () => setState(() => _selectedFilterIndex = 1),
+                                  child: Container(
+                                    padding: const EdgeInsets.symmetric(vertical: 14),
+                                    decoration: BoxDecoration(
+                                      color: _selectedFilterIndex == 1 ? Colors.white : Colors.transparent,
+                                      borderRadius: BorderRadius.circular(8),
+                                    ),
+                                    child: Row(
+                                      mainAxisAlignment: MainAxisAlignment.center,
+                                      children: [
+                                        const Icon(Icons.arrow_downward, color: Colors.blueAccent),
+                                        const SizedBox(width: 8),
+                                        Text('Khoản thu về', style: TextStyle(color: _selectedFilterIndex == 1 ? AppColors.primary : Colors.white)),
+                                      ],
+                                    ),
+                                  ),
+                                ),
                               ),
-                            ),
+                            ],
                           ),
                         ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: GestureDetector(
-                            onTap: () => setState(() => _selectedFilterIndex = 1),
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(vertical: 14),
-                              decoration: BoxDecoration(
-                                color: _selectedFilterIndex == 1 ? Colors.white : Colors.transparent,
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                              child: Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  const Icon(Icons.arrow_downward, color: Colors.blueAccent),
-                                  const SizedBox(width: 8),
-                                  Text('Khoản thu về', style: TextStyle(color: _selectedFilterIndex == 1 ? AppColors.primary : Colors.white)),
-                                ],
-                              ),
-                            ),
-                          ),
+                        const SizedBox(width: 8),
+                        IconButton(
+                          onPressed: () => setState(() => _isGridView = !_isGridView),
+                          icon: Icon(_isGridView ? Icons.view_list : Icons.grid_view, color: Colors.white),
+                          tooltip: _isGridView ? 'Chế độ danh sách' : 'Chế độ lưới',
                         ),
                       ],
                     ),
@@ -168,148 +180,189 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       ),
                     ],
                   )
-                : ListView.builder(
-                    itemCount: filteredTransactions.length,
-                  padding: const EdgeInsets.only(bottom: 120),
-                    itemBuilder: (context, index) {
-                      final transaction = filteredTransactions[index];
-                      final isExpense = transaction.type == 'expense';
-
-                      // --- SỬA TỪ ĐÂY: Bọc Card trong Dismissible ---
-                      return Dismissible(
-                        // Key là bắt buộc để Flutter biết dòng nào bị xóa
-                        key: Key(transaction.id.toString()),
-                        
-                        // Chỉ cho phép vuốt từ phải sang trái
-                        direction: DismissDirection.endToStart,
-                        
-                        confirmDismiss: (direction) async {
-                          return await showDialog(
-                            context: context,
-                            builder: (BuildContext context) {
-                              return AlertDialog(
-                                title: const Text("Xác nhận xóa"),
-                                content: const Text("Bạn có chắc chắn muốn xóa giao dịch này không?"),
-                                actions: [
-                                  TextButton(
-                                    onPressed: () => Navigator.of(context).pop(false), // Hủy -> Trả về false
-                                    child: const Text("Hủy"),
+                : _isGridView
+                    ? GridView.builder(
+                        padding: const EdgeInsets.only(bottom: 120, left: 12, right: 12, top: 8),
+                        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                          crossAxisCount: 2,
+                          crossAxisSpacing: 8,
+                          mainAxisSpacing: 8,
+                          childAspectRatio: 1.6,
+                        ),
+                        itemCount: filteredTransactions.length,
+                        itemBuilder: (context, index) {
+                          final transaction = filteredTransactions[index];
+                          final isExpense = transaction.type == 'expense';
+                          return Card(
+                            child: Padding(
+                              padding: const EdgeInsets.all(12),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Row(
+                                    children: [
+                                      CircleAvatar(
+                                        backgroundColor: isExpense ? Colors.red[50] : Colors.green[50],
+                                        child: Icon(
+                                          isExpense ? Icons.arrow_downward : Icons.arrow_upward,
+                                          color: isExpense ? AppColors.expense : AppColors.income,
+                                        ),
+                                      ),
+                                      const SizedBox(width: 8),
+                                      Expanded(child: Text(transaction.categoryName ?? 'Danh mục', style: const TextStyle(fontWeight: FontWeight.bold))),
+                                      Text(NumberFormat.currency(locale: 'vi_VN', symbol: 'đ').format(transaction.amount), style: TextStyle(color: isExpense ? AppColors.expense : AppColors.income, fontWeight: FontWeight.bold)),
+                                    ],
                                   ),
-                                  TextButton(
-                                    onPressed: () => Navigator.of(context).pop(true), // Đồng ý -> Trả về true
-                                    child: const Text("Xóa", style: TextStyle(color: Colors.red)),
-                                  ),
+                                  const SizedBox(height: 8),
+                                  Text(DateFormat('dd/MM/yyyy').format(transaction.date), style: const TextStyle(color: Colors.black54, fontSize: 12)),
                                 ],
+                              ),
+                            ),
+                          );
+                        },
+                      )
+                    : ListView.builder(
+                        itemCount: filteredTransactions.length,
+                      padding: const EdgeInsets.only(bottom: 120),
+                        itemBuilder: (context, index) {
+                          final transaction = filteredTransactions[index];
+                          final isExpense = transaction.type == 'expense';
+
+                          // --- SỬA TỪ ĐÂY: Bọc Card trong Dismissible ---
+                          return Dismissible(
+                            // Key là bắt buộc để Flutter biết dòng nào bị xóa
+                            key: Key(transaction.id.toString()),
+                            
+                            // Chỉ cho phép vuốt từ phải sang trái
+                            direction: DismissDirection.endToStart,
+                            
+                            confirmDismiss: (direction) async {
+                              return await showDialog(
+                                context: context,
+                                builder: (BuildContext context) {
+                                  return AlertDialog(
+                                    title: const Text("Xác nhận xóa"),
+                                    content: const Text("Bạn có chắc chắn muốn xóa giao dịch này không?"),
+                                    actions: [
+                                      TextButton(
+                                        onPressed: () => Navigator.of(context).pop(false), // Hủy -> Trả về false
+                                        child: const Text("Hủy"),
+                                      ),
+                                      TextButton(
+                                        onPressed: () => Navigator.of(context).pop(true), // Đồng ý -> Trả về true
+                                        child: const Text("Xóa", style: TextStyle(color: Colors.red)),
+                                      ),
+                                    ],
+                                  );
+                                },
                               );
                             },
+                            // Màu nền đỏ và icon thùng rác khi vuốt
+                            background: Container(
+                              color: Colors.red,
+                              alignment: Alignment.centerRight,
+                              padding: const EdgeInsets.only(right: 20),
+                              child: const Icon(Icons.delete, color: Colors.white),
+                            ),
+                            
+                            // Xử lý khi vuốt xong
+                            onDismissed: (direction) {
+                              // 1. Lưu dữ liệu cũ
+                              final deletedItem = transaction;
+                              
+                              // 2. LƯU PROVIDER VÀO BIẾN (Để dùng sau này mà không cần context)
+                              final transactionProvider = context.read<TransactionProvider>();
+                              
+                              // 3. Xóa trong Database
+                              transactionProvider.deleteTransaction(
+                                transaction.id!, 
+                                transaction.date
+                              );
+
+                              // 4. Hiện thông báo
+                              ScaffoldMessenger.of(context).clearSnackBars();
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: const Text('Đã xóa giao dịch'),
+                                  duration: const Duration(seconds: 3),
+                                  action: SnackBarAction(
+                                    label: 'HOÀN TÁC',
+                                    textColor: Colors.yellow,
+                                    onPressed: () async {
+                                      print("--- Bắt đầu hoàn tác ---");
+
+                                      // Chờ xíu cho DB ổn định
+                                      await Future.delayed(const Duration(milliseconds: 300));
+                                      
+                                      // ❌ XÓA DÒNG NÀY ĐI: if (!context.mounted) return;
+                                      // Vì dòng đã xóa rồi thì context chắc chắn không còn mounted,
+                                      // chúng ta không cần check nữa vì đã có biến transactionProvider ở trên.
+
+                                      // Tạo đối tượng mới (Bỏ ID)
+                                      final restoreTransaction = TransactionModel(
+                                        amount: deletedItem.amount,
+                                        note: deletedItem.note,
+                                        date: deletedItem.date,
+                                        categoryId: deletedItem.categoryId,
+                                        type: deletedItem.type,
+                                        categoryName: deletedItem.categoryName,
+                                        categoryIcon: deletedItem.categoryIcon,
+                                        categoryColor: deletedItem.categoryColor,
+                                      );
+                                      
+                                      try {
+                                        // SỬA Ở ĐÂY: Dùng biến 'transactionProvider' thay vì 'context.read...'
+                                        await transactionProvider.addTransaction(restoreTransaction);
+                                        print("--- Hoàn tác THÀNH CÔNG ---");
+                                      } catch (e) {
+                                        print("--- LỖI HOÀN TÁC: $e ---");
+                                      }
+                                    },
+                                  ),
+                                ),
+                              );
+                            },
+                            
+                            // Nội dung hiển thị (Card cũ của bạn)
+                            child: Card(
+                              margin: const EdgeInsets.symmetric(
+                                horizontal: 16,
+                                vertical: 6,
+                              ),
+                              child: ListTile(
+                                leading: CircleAvatar(
+                                  backgroundColor: isExpense
+                                      ? Colors.red[50]
+                                      : Colors.green[50],
+                                  child: Icon(
+                                    isExpense
+                                        ? Icons.arrow_downward
+                                        : Icons.arrow_upward,
+                                    color: isExpense
+                                        ? AppColors.expense
+                                        : AppColors.income,
+                                  ),
+                                ),
+                                title: Text(transaction.categoryName ?? 'Danh mục'),
+                                subtitle: Text(
+                                  DateFormat('dd/MM/yyyy').format(transaction.date),
+                                ),
+                                trailing: Text(
+                                  NumberFormat.currency(locale: 'vi_VN', symbol: 'đ')
+                                      .format(transaction.amount),
+                                  style: TextStyle(
+                                    color: isExpense
+                                        ? AppColors.expense
+                                        : AppColors.income,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ),
+                            ),
                           );
+                          // --- KẾT THÚC PHẦN SỬA ---
                         },
-                        // Màu nền đỏ và icon thùng rác khi vuốt
-                        background: Container(
-                          color: Colors.red,
-                          alignment: Alignment.centerRight,
-                          padding: const EdgeInsets.only(right: 20),
-                          child: const Icon(Icons.delete, color: Colors.white),
-                        ),
-                        
-                        // Xử lý khi vuốt xong
-                        onDismissed: (direction) {
-                          // 1. Lưu dữ liệu cũ
-                          final deletedItem = transaction;
-                          
-                          // 2. LƯU PROVIDER VÀO BIẾN (Để dùng sau này mà không cần context)
-                          final transactionProvider = context.read<TransactionProvider>();
-                          
-                          // 3. Xóa trong Database
-                          transactionProvider.deleteTransaction(
-                            transaction.id!, 
-                            transaction.date
-                          );
-
-                          // 4. Hiện thông báo
-                          ScaffoldMessenger.of(context).clearSnackBars();
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: const Text('Đã xóa giao dịch'),
-                              duration: const Duration(seconds: 3),
-                              action: SnackBarAction(
-                                label: 'HOÀN TÁC',
-                                textColor: Colors.yellow,
-                                onPressed: () async {
-                                  print("--- Bắt đầu hoàn tác ---");
-
-                                  // Chờ xíu cho DB ổn định
-                                  await Future.delayed(const Duration(milliseconds: 300));
-                                  
-                                  // ❌ XÓA DÒNG NÀY ĐI: if (!context.mounted) return;
-                                  // Vì dòng đã xóa rồi thì context chắc chắn không còn mounted,
-                                  // chúng ta không cần check nữa vì đã có biến transactionProvider ở trên.
-
-                                  // Tạo đối tượng mới (Bỏ ID)
-                                  final restoreTransaction = TransactionModel(
-                                    amount: deletedItem.amount,
-                                    note: deletedItem.note,
-                                    date: deletedItem.date,
-                                    categoryId: deletedItem.categoryId,
-                                    type: deletedItem.type,
-                                    categoryName: deletedItem.categoryName,
-                                    categoryIcon: deletedItem.categoryIcon,
-                                    categoryColor: deletedItem.categoryColor,
-                                  );
-                                  
-                                  try {
-                                    // SỬA Ở ĐÂY: Dùng biến 'transactionProvider' thay vì 'context.read...'
-                                    await transactionProvider.addTransaction(restoreTransaction);
-                                    print("--- Hoàn tác THÀNH CÔNG ---");
-                                  } catch (e) {
-                                    print("--- LỖI HOÀN TÁC: $e ---");
-                                  }
-                                },
-                              ),
-                            ),
-                          );
-                        },
-                        
-                        // Nội dung hiển thị (Card cũ của bạn)
-                        child: Card(
-                          margin: const EdgeInsets.symmetric(
-                            horizontal: 16,
-                            vertical: 6,
-                          ),
-                          child: ListTile(
-                            leading: CircleAvatar(
-                              backgroundColor: isExpense
-                                  ? Colors.red[50]
-                                  : Colors.green[50],
-                              child: Icon(
-                                isExpense
-                                    ? Icons.arrow_downward
-                                    : Icons.arrow_upward,
-                                color: isExpense
-                                    ? AppColors.expense
-                                    : AppColors.income,
-                              ),
-                            ),
-                            title: Text(transaction.categoryName ?? 'Danh mục'),
-                            subtitle: Text(
-                              DateFormat('dd/MM/yyyy').format(transaction.date),
-                            ),
-                            trailing: Text(
-                              NumberFormat.currency(locale: 'vi_VN', symbol: 'đ')
-                                  .format(transaction.amount),
-                              style: TextStyle(
-                                color: isExpense
-                                    ? AppColors.expense
-                                    : AppColors.income,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ),
-                        ),
-                      );
-                      // --- KẾT THÚC PHẦN SỬA ---
-                    },
-                  ),
+                      ),
           ),
         ],
       ),
@@ -367,24 +420,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
     );
   }
 
-  Widget _buildSummaryItem(String title, double amount, Color color) {
-    final formatter = NumberFormat.compact(
-      locale: 'vi_VN',
-    ); // Format số gọn (1tr, 200k)
-    return Column(
-      children: [
-        Text(title, style: const TextStyle(color: Colors.white70)),
-        Text(
-          formatter.format(amount),
-          style: TextStyle(
-            color: color,
-            fontWeight: FontWeight.bold,
-            fontSize: 16,
-          ),
-        ),
-      ],
-    );
-  }
 
   Widget _buildBottomItem(int index, IconData icon, String label) {
     final isSelected = _selectedBottomIndex == index;

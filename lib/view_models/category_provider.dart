@@ -17,9 +17,14 @@ class CategoryProvider with ChangeNotifier {
   }
 
   Future<int> addCategory(CategoryModel category) async {
-    final id = await DatabaseHelper.instance.insertCategory(category);
-    await loadAll();
-    return id;
+    try {
+      final id = await DatabaseHelper.instance.insertCategory(category);
+      await loadAll();
+      return id;
+    } catch (e, st) {
+      debugPrint('addCategory failed: $e\n$st');
+      rethrow;
+    }
   }
 
   Future<void> deleteCategory(int id) async {
