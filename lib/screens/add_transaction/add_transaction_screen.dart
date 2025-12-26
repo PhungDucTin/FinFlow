@@ -2,7 +2,6 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import '../../models/category_model.dart';
 import '../../models/transaction_model.dart';
 import '../../services/database_helper.dart';
@@ -67,7 +66,12 @@ class _AddTransactionScreenState extends State<AddTransactionScreen>
     final type = _tabController.index == 0 ? 'expense' : 'income';
 
     final user = FirebaseAuth.instance.currentUser;
-    if (user == null) return; // Chưa đăng nhập thì không lưu được
+    if (user == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Vui lòng đăng nhập để thêm giao dịch")),
+      );
+      return;
+    }
 
     final newTransaction = TransactionModel(
       userId: user.uid, 
