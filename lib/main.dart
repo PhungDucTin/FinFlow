@@ -10,20 +10,15 @@ import 'view_models/transaction_provider.dart';
 import 'services/auth_service.dart';
 import 'package:finflow/screens/dashboard/dashboard_screen.dart';
 import 'package:finflow/screens/login/login_screen.dart';
+import 'firebase_options.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // 1. Khởi tạo Firebase
+  // 1. Khởi tạo Firebase với cấu hình mới
   try {
     await Firebase.initializeApp(
-      options: const FirebaseOptions(
-        apiKey: "AIzaSyBT3EeHOfBN6nhoDSKqbmXS1AbPUjncY1c",
-        appId: "1:910639759238:android:369586eed79bea992fb607",
-        messagingSenderId: "910639759238",
-        projectId: "finflow-b37a5",
-        storageBucket: "finflow-b37a5.firebasestorage.app",
-      ),
+      options: DefaultFirebaseOptions.currentPlatform,
     );
   } catch (e) {
     print("⚠️ Lỗi Firebase: $e");

@@ -437,4 +437,16 @@ Future _seedData(Database db) async {
     // Lưu ý: Cần phải xử lý logic nếu xoá danh mục đã có giao dịch (có thể chặn hoặc chuyển giao dịch sang 'Khác')
     return await db.delete('categories', where: 'id = ?', whereArgs: [id]);
   }
+
+  // 13. Lấy danh sách ghi chú duy nhất đã từng nhập cho một danh mục cụ thể
+Future<List<String>> getUniqueNotesByCategory(int categoryId) async {
+  final db = await instance.database;
+  final result = await db.rawQuery('''
+    SELECT DISTINCT note FROM transactions 
+    WHERE category_id = ? AND note != '' 
+    ORDER BY id DESC LIMIT 5
+  ''', [categoryId]);
+  
+  return result.map((row) => row['note'] as String).toList();
+}
 }

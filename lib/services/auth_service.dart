@@ -8,7 +8,9 @@ class AuthService {
   // Client ID từ Firebase Console (Web Client ID)
   // Bạn cần lấy từ: Firebase Console > Authentication > Sign-in method > Google > Web SDK configuration
   // Hoặc: Google Cloud Console > APIs & Services > Credentials > OAuth 2.0 Client IDs (Web client)
-  static const String _webClientId = '910639759238-eeq2vhrq7qcvaees873a1lqsiekg6kfi.apps.googleusercontent.com';
+  // TODO: Thay thế bằng Web Client ID từ Firebase project mới của bạn
+  // Ví dụ: '835620235882-xxxxxxxxxxxxx.apps.googleusercontent.com'
+  static const String _webClientId = '287157964374-4log7egirecln1307f2mtgvgnhpjkp7r.apps.googleusercontent.com'; // Cần cập nhật Web Client ID từ Firebase Console
 
   // Lấy user hiện tại
   User? get currentUser => _firebaseAuth.currentUser;
@@ -34,6 +36,15 @@ class AuthService {
   /// Đăng nhập với Google
   Future<UserCredential?> signInWithGoogle() async {
     try {
+      // Kiểm tra Web Client ID trên web
+      if (kIsWeb && _webClientId.isEmpty) {
+        throw 'Web Client ID chưa được cấu hình. Vui lòng:\n'
+            '1. Vào Firebase Console > Authentication > Sign-in method > Google\n'
+            '2. Copy Web Client ID từ phần "Web SDK configuration"\n'
+            '3. Cập nhật _webClientId trong lib/services/auth_service.dart\n'
+            'Hoặc vào: Google Cloud Console > APIs & Services > Credentials > OAuth 2.0 Client IDs (Web client)';
+      }
+
       // Khởi tạo GoogleSignIn với clientId (cho web) hoặc để null (cho mobile - tự động lấy từ google-services.json)
       // Chỉ request scope 'email' để tránh cần People API (nếu chưa bật)
       final GoogleSignIn googleSignIn = kIsWeb
@@ -81,7 +92,7 @@ class AuthService {
       // Xử lý lỗi People API một cách thân thiện
       final errorString = e.toString();
       if (errorString.contains('People API') || errorString.contains('SERVICE_DISABLED')) {
-        throw 'People API chưa được bật. Vui lòng bật tại:\nhttps://console.developers.google.com/apis/api/people.googleapis.com/overview?project=910639759238\n\nHoặc xem hướng dẫn trong file GOOGLE_SIGNIN_SETUP.md';
+        throw 'People API chưa được bật. Vui lòng bật tại:\nhttps://console.developers.google.com/apis/api/people.googleapis.com/overview?project=finflow-4c0ea\n\nHoặc xem hướng dẫn trong file GOOGLE_SIGNIN_SETUP.md';
       }
       throw 'Không thể đăng nhập bằng Google: $e';
     }
@@ -154,17 +165,17 @@ class AuthService {
     }
   }
 
-Future<void> updateDisplayName(String newName) async {
-  try {
-    User? user = _firebaseAuth.currentUser;
-    if (user != null) {
-      await user.updateDisplayName(newName);
-      await user.reload();
+  Future<void> updateDisplayName(String newName) async {
+    try {
+      User? user = _firebaseAuth.currentUser;
+      if (user != null) {
+        await user.updateDisplayName(newName);
+        await user.reload();
+      }
+    } catch (e) {
+      throw 'Không thể cập nhật tên: $e';
     }
-  } catch (e) {
-    throw 'Không thể cập nhật tên: $e';
   }
-}
 
   // Xử lý lỗi Firebase Auth
   String _handleAuthException(FirebaseAuthException e) {
