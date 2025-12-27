@@ -42,9 +42,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
             onPressed: () {
               Navigator.push(
                 context,
-                MaterialPageRoute(
-                  builder: (context) => const ReportsScreen(),
-                ),
+                MaterialPageRoute(builder: (context) => const ReportsScreen()),
               );
             },
           ),
@@ -54,9 +52,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
             onPressed: () {
               Navigator.push(
                 context,
-                MaterialPageRoute(
-                  builder: (context) => const SettingsScreen(),
-                ),
+                MaterialPageRoute(builder: (context) => const SettingsScreen()),
               );
             },
           ),
@@ -128,25 +124,34 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       return Dismissible(
                         // Key là bắt buộc để Flutter biết dòng nào bị xóa
                         key: Key(transaction.id.toString()),
-                        
+
                         // Chỉ cho phép vuốt từ phải sang trái
                         direction: DismissDirection.endToStart,
-                        
+
                         confirmDismiss: (direction) async {
                           return await showDialog(
                             context: context,
                             builder: (BuildContext context) {
                               return AlertDialog(
                                 title: const Text("Xác nhận xóa"),
-                                content: const Text("Bạn có chắc chắn muốn xóa giao dịch này không?"),
+                                content: const Text(
+                                  "Bạn có chắc chắn muốn xóa giao dịch này không?",
+                                ),
                                 actions: [
                                   TextButton(
-                                    onPressed: () => Navigator.of(context).pop(false), // Hủy -> Trả về false
+                                    onPressed: () => Navigator.of(
+                                      context,
+                                    ).pop(false), // Hủy -> Trả về false
                                     child: const Text("Hủy"),
                                   ),
                                   TextButton(
-                                    onPressed: () => Navigator.of(context).pop(true), // Đồng ý -> Trả về true
-                                    child: const Text("Xóa", style: TextStyle(color: Colors.red)),
+                                    onPressed: () => Navigator.of(
+                                      context,
+                                    ).pop(true), // Đồng ý -> Trả về true
+                                    child: const Text(
+                                      "Xóa",
+                                      style: TextStyle(color: Colors.red),
+                                    ),
                                   ),
                                 ],
                               );
@@ -160,65 +165,68 @@ class _DashboardScreenState extends State<DashboardScreen> {
                           padding: const EdgeInsets.only(right: 20),
                           child: const Icon(Icons.delete, color: Colors.white),
                         ),
-                        
+
                         // Xử lý khi vuốt xong
                         onDismissed: (direction) {
-                          // 1. Lưu dữ liệu cũ
+                          // 1. Lưu dữ liệu để hoàn tác
                           final deletedItem = transaction;
-                          
-                          // 2. LƯU PROVIDER VÀO BIẾN (Để dùng sau này mà không cần context)
-                          final transactionProvider = context.read<TransactionProvider>();
-                          
-                          // 3. Xóa trong Database
+                          final transactionProvider = context
+                              .read<TransactionProvider>();
+                          final String? currentUserId = deletedItem.userId;
+
+                          // 2. Xóa khỏi Database
                           transactionProvider.deleteTransaction(
-                            transaction.id!, 
-                            transaction.date
+                            transaction.id!,
+                            transaction.date,
                           );
 
-                          // 4. Hiện thông báo
-                          ScaffoldMessenger.of(context).clearSnackBars();
+                          // 3. XỬ LÝ SNACKBAR ĐÚNG CHUẨN:
+
+                          // Bước A: Ẩn ngay lập tức SnackBar đang hiện (nếu có)
+                          ScaffoldMessenger.of(context).hideCurrentSnackBar();
+
+                          // Bước B: Hiển thị SnackBar mới
                           ScaffoldMessenger.of(context).showSnackBar(
                             SnackBar(
-                              content: const Text('Đã xóa giao dịch'),
-                              duration: const Duration(seconds: 3),
+                              content: const Text("Đã xoá giao dịch"),
+                              // Thời gian hiển thị ngắn gọn: 2 giây
+                              duration: const Duration(seconds: 2),
+                              // Floating giúp nó nổi lên đẹp hơn, tránh che khuất nội dung quan trọng
+                              behavior: SnackBarBehavior.floating,
+                              // Margin giúp nó cách đáy màn hình 1 chút (tránh bị đè bởi thanh điều hướng ảo)
+                              margin: const EdgeInsets.only(
+                                bottom: 80,
+                                left: 10,
+                                right: 10,
+                              ),
+
                               action: SnackBarAction(
                                 label: 'HOÀN TÁC',
-                                textColor: Colors.yellow,
+                                textColor: Colors
+                                    .amberAccent, // Màu vàng sáng cho dễ nhìn
                                 onPressed: () async {
-                                  print("--- Bắt đầu hoàn tác ---");
-
-                                  // Chờ xíu cho DB ổn định
-                                  await Future.delayed(const Duration(milliseconds: 300));
-                                  
-                                  // ❌ XÓA DÒNG NÀY ĐI: if (!context.mounted) return;
-                                  // Vì dòng đã xóa rồi thì context chắc chắn không còn mounted,
-                                  // chúng ta không cần check nữa vì đã có biến transactionProvider ở trên.
-
-                                  // Tạo đối tượng mới (Bỏ ID)
+                                  // Logic hoàn tác (Giữ nguyên logic của bạn)
+                                  await Future.delayed(
+                                    const Duration(milliseconds: 300),
+                                  );
                                   final restoreTransaction = TransactionModel(
+                                    userId: currentUserId,
                                     amount: deletedItem.amount,
                                     note: deletedItem.note,
                                     date: deletedItem.date,
                                     categoryId: deletedItem.categoryId,
                                     type: deletedItem.type,
-                                    categoryName: deletedItem.categoryName,
-                                    categoryIcon: deletedItem.categoryIcon,
-                                    categoryColor: deletedItem.categoryColor,
+                                    // Các trường phụ khác...
                                   );
-                                  
-                                  try {
-                                    // SỬA Ở ĐÂY: Dùng biến 'transactionProvider' thay vì 'context.read...'
-                                    await transactionProvider.addTransaction(restoreTransaction);
-                                    print("--- Hoàn tác THÀNH CÔNG ---");
-                                  } catch (e) {
-                                    print("--- LỖI HOÀN TÁC: $e ---");
-                                  }
+                                  await transactionProvider.addTransaction(
+                                    restoreTransaction,
+                                  );
                                 },
                               ),
                             ),
                           );
                         },
-                        
+
                         // Nội dung hiển thị (Card cũ của bạn)
                         child: Card(
                           margin: const EdgeInsets.symmetric(
@@ -244,8 +252,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
                               DateFormat('dd/MM/yyyy').format(transaction.date),
                             ),
                             trailing: Text(
-                              NumberFormat.currency(locale: 'vi_VN', symbol: 'đ')
-                                  .format(transaction.amount),
+                              NumberFormat.currency(
+                                locale: 'vi_VN',
+                                symbol: 'đ',
+                              ).format(transaction.amount),
                               style: TextStyle(
                                 color: isExpense
                                     ? AppColors.expense

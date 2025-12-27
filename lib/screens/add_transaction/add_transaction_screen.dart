@@ -30,9 +30,8 @@ class _AddTransactionScreenState extends State<AddTransactionScreen>
   void initState() {
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
-    _loadCategories('expense'); // Mặc định load danh mục Chi tiêu
+    _loadCategories('expense');
 
-    // Lắng nghe khi chuyển Tab (Chi tiêu <-> Thu nhập)
     _tabController.addListener(() {
       if (_tabController.indexIsChanging) {
         final type = _tabController.index == 0 ? 'expense' : 'income';
@@ -41,238 +40,367 @@ class _AddTransactionScreenState extends State<AddTransactionScreen>
     });
   }
 
-  // Hàm lấy danh mục từ Database
   void _loadCategories(String type) async {
     setState(() => _isLoading = true);
     final cats = await DatabaseHelper.instance.getCategoriesByType(type);
     setState(() {
       _categories = cats;
-      _selectedCategoryId = null; // Reset chọn khi đổi tab
+      _selectedCategoryId = null;
       _isLoading = false;
     });
   }
 
-  // Hàm Lưu Giao Dịch
+  // --- 1. GIAO DIỆN BÀN PHÍM SỐ (Numeric Keypad) 
+void _showNumericKeyboard(CategoryModel category, List<String> suggestions) {
+  final walletBalance = context.read<TransactionProvider>().walletBalance;
+
+  showModalBottomSheet(
+    context: context,
+    isScrollControlled: true,
+    backgroundColor: Colors.transparent,
+    builder: (context) => StatefulBuilder(
+      builder: (context, setModalState) => Container(
+        height: MediaQuery.of(context).size.height * 0.85, 
+        decoration: const BoxDecoration(
+          color: Color(0xFF065B4C),
+          borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
+        ),
+        child: Column(
+          children: [
+            const SizedBox(height: 12),
+            // HEADER (Ví & Danh mục) - Giữ nguyên
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Column(
+                    children: [
+                      const Icon(Icons.account_balance_wallet, color: Colors.white, size: 28),
+                      Text("${walletBalance.toInt()} đ", style: const TextStyle(color: Colors.white, fontSize: 12)),
+                    ],
+                  ),
+                  Column(
+                    children: [
+                      CircleAvatar(
+                        backgroundColor: Colors.white24,
+                        child: Icon(getIconByKey(category.iconKey), color: Colors.white),
+                      ),
+                      Text(category.name, style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
+                    ],
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.cancel, color: Colors.white70, size: 30),
+                    onPressed: () => Navigator.pop(context),
+                  ),
+                ],
+              ),
+            ),
+
+            // HIỂN THỊ SỐ TIỀN LỚN
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 40),
+              child: Text(
+                _amountController.text.isEmpty ? "0 đ" : "${_amountController.text} đ",
+                style: const TextStyle(color: Colors.white, fontSize: 52, fontWeight: FontWeight.bold),
+              ),
+            ),
+
+            // --- ĐÃ XÓA PHẦN GHI CHÚ GỢI Ý (WRAP) TẠI ĐÂY THEO YÊU CẦU ---
+
+            const Spacer(), // Đẩy bàn phím xuống đáy
+            
+            // NÚT SỐ TIỀN NHANH (5k, 10k, 50k)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 10),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: ["5,000", "10,000", "50,000"].map((val) => OutlinedButton(
+                  onPressed: () => setModalState(() => _amountController.text = val.replaceAll(',', '')),
+                  style: OutlinedButton.styleFrom(side: const BorderSide(color: Colors.white38)),
+                  child: Text(val, style: const TextStyle(color: Colors.white)),
+                )).toList(),
+              ),
+            ),
+
+            // --- BÀN PHÍM ĐÃ FIX LỖI KHOẢNG TRỐNG ---
+            // Sử dụng Column + Row thay vì GridView để tùy biến độ rộng nút AC
+            Container(
+              decoration: const BoxDecoration(
+                border: Border(top: BorderSide(color: Colors.white10, width: 0.5)),
+              ),
+              // Chiều cao cố định cho bàn phím để không bị lỗi layout
+              height: MediaQuery.of(context).size.height * 0.45, 
+              child: Column(
+                children: [
+                  // Hàng 1: AC (chiếm 2 phần) và Backspace (chiếm 1 phần)
+                  Expanded(
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        Expanded(flex: 2, child: _buildGridKey("AC", setModalState)), // AC dài gấp đôi
+                        Expanded(flex: 1, child: _buildGridKeyIcon(Icons.backspace_outlined, setModalState)),
+                      ],
+                    ),
+                  ),
+                  // Hàng 2: 1 - 2 - 3
+                  Expanded(child: _buildRowKey(["1", "2", "3"], setModalState)),
+                  // Hàng 3: 4 - 5 - 6
+                  Expanded(child: _buildRowKey(["4", "5", "6"], setModalState)),
+                  // Hàng 4: 7 - 8 - 9
+                  Expanded(child: _buildRowKey(["7", "8", "9"], setModalState)),
+                  // Hàng 5: 000 - 0 - Check
+                  Expanded(
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        Expanded(child: _buildGridKey("000", setModalState)),
+                        Expanded(child: _buildGridKey("0", setModalState)),
+                        Expanded(
+                          child: GestureDetector(
+                            onTap: () {
+                              Navigator.pop(context);
+                              _saveTransaction();
+                            },
+                            child: Container(
+                              decoration: BoxDecoration(
+                                color: Colors.white.withOpacity(0.05),
+                                border: Border.all(color: Colors.white10, width: 0.5),
+                              ),
+                              child: Center(
+                                child: Container(
+                                  padding: const EdgeInsets.all(10),
+                                  decoration: const BoxDecoration(color: Color(0xFFFBC02D), shape: BoxShape.circle),
+                                  child: const Icon(Icons.check, color: Color(0xFF065B4C), size: 28),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    ),
+  );
+}
+
+Widget _buildRowKey(List<String> keys, Function setModalState) {
+  return Row(
+    crossAxisAlignment: CrossAxisAlignment.stretch,
+    children: keys.map((k) => Expanded(child: _buildGridKey(k, setModalState))).toList(),
+  );
+}
+
+Widget _buildQuickTag(String label) {
+  return Container(
+    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+    decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(15)),
+    child: Text(label, style: const TextStyle(color: Color(0xFF004D40), fontSize: 12, fontWeight: FontWeight.bold)),
+  );
+}
+
+// Widget cho các nút số tiền nhanh (5k, 10k...)
+Widget _buildQuickAmount(String amount, Function setModalState) {
+  return GestureDetector(
+    onTap: () {
+      setModalState(() => _amountController.text = amount.replaceAll(',', ''));
+      setState(() {});
+    },
+    child: Container(
+      width: 100,
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      decoration: BoxDecoration(border: Border.all(color: Colors.white54), borderRadius: BorderRadius.circular(8)),
+      child: Center(child: Text(amount, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold))),
+    ),
+  );
+}
+
+// Hàm xây dựng phím bấm có kẻ khung Grid (Border)
+Widget _buildGridKey(String label, Function setModalState, {Color? color}) {
+  return Container(
+    decoration: BoxDecoration(
+      color: color ?? Colors.white.withOpacity(0.05),
+      border: Border.all(color: Colors.white10, width: 0.5), // Đường kẻ lưới
+    ),
+    child: TextButton(
+      onPressed: () {
+        setModalState(() {
+          if (label == "AC") _amountController.clear();
+          else _amountController.text += label;
+        });
+        setState(() {});
+      },
+      child: Text(label, style: const TextStyle(color: Colors.white, fontSize: 26, fontWeight: FontWeight.w400)),
+    ),
+  );
+}
+
+// Widget phím Icon (Xóa) có kẻ khung
+Widget _buildGridKeyIcon(IconData icon, Function setModalState, {Color? color}) {
+  return Container(
+    decoration: BoxDecoration(
+      color: color ?? Colors.white.withOpacity(0.05),
+      border: Border.all(color: Colors.white10, width: 0.5),
+    ),
+    child: IconButton(
+      icon: Icon(icon, color: Colors.white, size: 26),
+      onPressed: () {
+        setModalState(() {
+          if (_amountController.text.isNotEmpty) {
+            _amountController.text = _amountController.text.substring(0, _amountController.text.length - 1);
+          }
+        });
+        setState(() {});
+      },
+    ),
+  );
+}
+
   void _saveTransaction() {
     if (_amountController.text.isEmpty || _selectedCategoryId == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Vui lòng nhập tiền và chọn danh mục")),
-      );
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Vui lòng nhập tiền và chọn danh mục")));
       return;
     }
-
-    // Xử lý số tiền (Xóa dấu chấm/phẩy nếu có)
     final amount = double.tryParse(_amountController.text.replaceAll(RegExp(r'[^0-9]'), '')) ?? 0;
-    final type = _tabController.index == 0 ? 'expense' : 'income';
-
     final user = FirebaseAuth.instance.currentUser;
-    if (user == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Vui lòng đăng nhập để thêm giao dịch")),
-      );
-      return;
-    }
+    if (user == null) return;
 
     final newTransaction = TransactionModel(
-      userId: user.uid, 
+      userId: user.uid,
       amount: amount,
       note: _noteController.text,
       date: _selectedDate,
       categoryId: _selectedCategoryId!,
-      type: type,
+      type: _tabController.index == 0 ? 'expense' : 'income',
     );
-
-    // Gọi Provider để lưu và cập nhật Dashboard
     context.read<TransactionProvider>().addTransaction(newTransaction);
-
-    Navigator.pop(context); // Đóng màn hình
+    Navigator.pop(context);
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: const Color(0xFFF5F7FA), // Nền xám nhạt cho nổi Card
       appBar: AppBar(
-        title: const Text("Thêm giao dịch", style: TextStyle(color: Colors.white)),
+        title: const Text("Thêm giao dịch", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
         backgroundColor: AppColors.primary,
+        elevation: 0,
         iconTheme: const IconThemeData(color: Colors.white),
         bottom: TabBar(
           controller: _tabController,
           indicatorColor: Colors.amber,
-          labelColor: Colors.white,
-          unselectedLabelColor: Colors.white70,
           labelStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-          tabs: const [
-            Tab(text: "CHI TIÊU"),
-            Tab(text: "THU NHẬP"),
-          ],
+          tabs: const [Tab(text: "CHI TIÊU"), Tab(text: "THU NHẬP")],
         ),
       ),
-      body: Column(
-        children: [
-          // 1. Nhập tiền và Ghi chú
-          Container(
-            padding: const EdgeInsets.all(20),
-            color: Colors.white,
-            child: Column(
-              children: [
-                TextField(
-                  controller: _amountController,
-                  keyboardType: TextInputType.number,
-                  style: const TextStyle(fontSize: 28, color: AppColors.primary, fontWeight: FontWeight.bold),
-                  decoration: const InputDecoration(
-                    labelText: "Số tiền",
-                    suffixText: "đ",
-                    border: OutlineInputBorder(),
-                    prefixIcon: Icon(Icons.attach_money),
+      body: SingleChildScrollView(
+        child: Column(
+          children: [
+            // Input Section
+            Container(
+              padding: const EdgeInsets.all(20),
+              decoration: const BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.vertical(bottom: Radius.circular(24)),
+              ),
+              child: Column(
+                children: [
+                  TextField(
+                    controller: _amountController,
+                    readOnly: true,
+                    textAlign: TextAlign.center,
+                    onTap: () async {
+                      if (_selectedCategoryId != null) {
+                        final category = _categories.firstWhere((c) => c.id == _selectedCategoryId);
+                        List<String> notes = await DatabaseHelper.instance.getUniqueNotesByCategory(category.id!);
+                        _showNumericKeyboard(category, notes);
+                      }
+                    },
+                    style: const TextStyle(fontSize: 36, color: AppColors.primary, fontWeight: FontWeight.bold),
+                    decoration: const InputDecoration(hintText: "0", suffixText: "đ", border: InputBorder.none),
                   ),
-                ),
-                const SizedBox(height: 15),
-                Row(
-                  children: [
-                    Expanded(
-                      child: TextField(
-                        controller: _noteController,
-                        decoration: const InputDecoration(
-                          hintText: "Ghi chú (vd: Ăn sáng)",
-                          prefixIcon: Icon(Icons.note_alt_outlined),
+                  const Divider(),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: TextField(
+                          controller: _noteController,
+                          decoration: const InputDecoration(hintText: "Ghi chú...", border: InputBorder.none, prefixIcon: Icon(Icons.edit_note)),
                         ),
                       ),
-                    ),
-                    const SizedBox(width: 10),
-                    // Chọn ngày
-                    InkWell(
-                      onTap: () async {
-                        final picked = await showDatePicker(
-                          context: context,
-                          initialDate: _selectedDate,
-                          firstDate: DateTime(2020),
-                          lastDate: DateTime(2030),
-                        );
-                        if (picked != null) setState(() => _selectedDate = picked);
-                      },
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 15),
-                        decoration: BoxDecoration(
-                          border: Border.all(color: Colors.grey.shade300),
-                          borderRadius: BorderRadius.circular(5),
-                        ),
-                        child: Row(
-                          children: [
-                            const Icon(Icons.calendar_today, size: 18, color: Colors.grey),
-                            const SizedBox(width: 5),
-                            Text(DateFormat('dd/MM').format(_selectedDate), style: const TextStyle(fontWeight: FontWeight.bold)),
-                          ],
-                        ),
-                      ),
-                    )
-                  ],
-                )
-              ],
+                      TextButton.icon(
+                        onPressed: () async {
+                          final picked = await showDatePicker(context: context, initialDate: _selectedDate, firstDate: DateTime(2020), lastDate: DateTime(2030));
+                          if (picked != null) setState(() => _selectedDate = picked);
+                        },
+                        icon: const Icon(Icons.calendar_month, size: 20),
+                        label: Text(DateFormat('dd/MM').format(_selectedDate)),
+                      )
+                    ],
+                  )
+                ],
+              ),
             ),
-          ),
-          
-          const SizedBox(height: 10),
-          const Padding(
-            padding: EdgeInsets.only(left: 16, bottom: 8),
-            child: Align(
-              alignment: Alignment.centerLeft,
-              child: Text("Danh mục", style: TextStyle(fontWeight: FontWeight.bold, color: Colors.grey)),
-            ),
-          ),
-
-          // 2. Lưới danh mục
-          Expanded(
-            child: _isLoading
+            
+            // --- 2. GIAO DIỆN DANH MỤC 3 CỘT PASTEL GIỐNG ẢNH 847 ---
+            Padding(
+              padding: const EdgeInsets.all(16),
+              child: _isLoading
                 ? const Center(child: CircularProgressIndicator())
                 : GridView.builder(
-                    padding: const EdgeInsets.all(16),
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
                     gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount: 4, // 4 cột
-                      childAspectRatio: 0.75, // Tăng chiều cao một chút cho thoáng
-                      crossAxisSpacing: 12,
-                      mainAxisSpacing: 12,
+                      crossAxisCount: 3,
+                      childAspectRatio: 0.88,
+                      crossAxisSpacing: 15,
+                      mainAxisSpacing: 15,
                     ),
                     itemCount: _categories.length,
                     itemBuilder: (context, index) {
                       final cat = _categories[index];
                       final isSelected = cat.id == _selectedCategoryId;
-                      
-                      final catColor = getColorFromHex(cat.colorHex); 
-                      final catIcon = getIconByKey(cat.iconKey);
-                      
-                      // Lấy phiên bản đậm hơn của màu danh mục (Gọi hàm mới thêm)
-                      final darkerCatColor = getDarkerColor(catColor);
+                      final catColor = getColorFromHex(cat.colorHex);
 
                       return GestureDetector(
-                        onTap: () => setState(() => _selectedCategoryId = cat.id),
-                        child: Column(
-                          children: [
-                            // Vòng tròn Icon (Animated cho mượt)
-                            AnimatedContainer(
-                              duration: const Duration(milliseconds: 200),
-                              height: 62, // Tăng kích thước một chút
-                              width: 62,
-                              decoration: BoxDecoration(
-                                shape: BoxShape.circle,
-                                // Nền: Nếu chọn -> Đậm. Nếu chưa -> Pastle trung bình (0.4)
-                                color: isSelected ? darkerCatColor : catColor.withOpacity(0.4),
-                                
-                                // Đổ bóng rực rỡ khi chọn
-                                boxShadow: isSelected
-                                    ? [
-                                        BoxShadow(
-                                          color: darkerCatColor.withOpacity(0.5),
-                                          blurRadius: 12,
-                                          offset: const Offset(0, 4),
-                                        )
-                                      ]
-                                    : [],
+                        onTap: () async {
+                          setState(() => _selectedCategoryId = cat.id);
+                          List<String> notes = await DatabaseHelper.instance.getUniqueNotesByCategory(cat.id!);
+                          _showNumericKeyboard(cat, notes);
+                        },
+                        child: AnimatedContainer(
+                          duration: const Duration(milliseconds: 200),
+                          decoration: BoxDecoration(
+                            color: catColor.withOpacity(0.18), // Màu pastel nhẹ
+                            borderRadius: BorderRadius.circular(20),
+                            border: isSelected ? Border.all(color: catColor, width: 2.5) : null,
+                            boxShadow: isSelected ? [BoxShadow(color: catColor.withOpacity(0.3), blurRadius: 8, offset: const Offset(0, 4))] : [],
+                          ),
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(getIconByKey(cat.iconKey), size: 48, color: catColor),
+                              const SizedBox(height: 10),
+                              Text(
+                                cat.name,
+                                style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: Colors.teal.shade900),
                               ),
-                              child: Icon(
-                                catIcon,
-                                // --- ĐIỂM NHẤN SÁC MÀU ---
-                                // Nếu chọn: Trắng. 
-                                // Nếu chưa: Tô Icon bằng màu ĐẬM đặc gốc của danh mục đó
-                                color: isSelected ? Colors.white : darkerCatColor, 
-                                size: 30, // Tăng kích thước icon
-                              ),
-                            ),
-                            const SizedBox(height: 8),
-                            // Tên danh mục
-                            Text(
-                              cat.name,
-                              textAlign: TextAlign.center,
-                              style: TextStyle(
-                                fontSize: 12,
-                                // Chữ cũng đậm hơn chút cho rõ
-                                fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
-                                color: isSelected ? Colors.black : Colors.black87,
-                              ),
-                              maxLines: 2,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ],
+                            ],
+                          ),
                         ),
                       );
                     },
                   ),
-          ),
-          
-          // 3. Nút Lưu
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.all(16),
-            child: ElevatedButton(
-              onPressed: _saveTransaction,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.primary,
-                padding: const EdgeInsets.symmetric(vertical: 16),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-              ),
-              child: const Text("LƯU", style: TextStyle(fontSize: 18, color: Colors.white, fontWeight: FontWeight.bold)),
             ),
-          ),
-        ],
+            const SizedBox(height: 30),
+          ],
+        ),
       ),
     );
   }

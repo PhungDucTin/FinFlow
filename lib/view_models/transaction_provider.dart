@@ -12,6 +12,8 @@ class TransactionProvider with ChangeNotifier {
   double _totalExpense = 0.0;
   double _balance = 0.0;
 
+  double _walletBalance = 0.0;
+
   String get _currentUserId {
     final user = FirebaseAuth.instance.currentUser;
     return user?.uid ?? '';
@@ -22,10 +24,12 @@ class TransactionProvider with ChangeNotifier {
   double get totalIncome => _totalIncome;
   double get totalExpense => _totalExpense;
   double get balance => _balance;
+  double get walletBalance => _walletBalance;
 
   // 1. Hàm tải dữ liệu ban đầu (Gọi khi mở app)
   Future<void> loadData() async {
-    if(_currentUserId.isEmpty) return; // Nếu chưa đăng nhập, không tải dữ liệu
+    if (_currentUserId.isEmpty) return;
+    await _calculateWalletBalance(); // Tính tổng tiền trong ví
     await loadTransactionsByMonth(DateTime.now());
   }
 
@@ -51,12 +55,14 @@ class TransactionProvider with ChangeNotifier {
   Future<void> addTransaction(TransactionModel transaction) async {
     await DatabaseHelper.instance.insertTransaction(transaction);
     // Reload lại dữ liệu tháng hiện tại để Dashboard cập nhật ngay
+    await _calculateWalletBalance();
     await loadTransactionsByMonth(transaction.date);
   }
 
   // 4. Xoá giao dịch
   Future<void> deleteTransaction(int id, DateTime currentDate) async {
     await DatabaseHelper.instance.deleteTransaction(id);
+    await _calculateWalletBalance();
     await loadTransactionsByMonth(currentDate);
   }
 
@@ -80,5 +86,27 @@ class TransactionProvider with ChangeNotifier {
       _currentUserId,
     );
     _balance = _totalIncome - _totalExpense;
+  }
+
+  // Hàm tính tổng số dư ví (Tổng Thu - Tổng Chi toàn thời gian)
+  Future<void> _calculateWalletBalance() async {
+    // Lấy TOÀN BỘ giao dịch của người dùng từ database
+    final allTransactions = await DatabaseHelper.instance.getAllTransactions();
+    final userTransactions = allTransactions.where(
+      (t) => t.userId == _currentUserId,
+    );
+
+    double totalIn = 0;
+    double totalOut = 0;
+
+    for (var t in userTransactions) {
+      if (t.type == 'income') {
+        totalIn += t.amount;
+      } else {
+        totalOut += t.amount;
+      }
+    }
+    _walletBalance = totalIn - totalOut;
+    notifyListeners(); // Báo cho UI cập nhật số tiền ở biểu tượng Ví
   }
 }
