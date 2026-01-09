@@ -109,4 +109,18 @@ class TransactionProvider with ChangeNotifier {
     _walletBalance = totalIn - totalOut;
     notifyListeners(); // Báo cho UI cập nhật số tiền ở biểu tượng Ví
   }
+
+Future<void> updateTransaction(TransactionModel transaction) async {
+    await DatabaseHelper.instance.updateTransaction(transaction);
+
+    await _calculateWalletBalance();
+
+    await loadTransactionsByMonth(transaction.date);
+    // Cách 1: Sửa trực tiếp trong list hiện tại (Nhanh, không cần load lại DB)
+    final index = _transactions.indexWhere((t) => t.id == transaction.id);
+    if (index != -1) {
+      _transactions[index] = transaction;
+      notifyListeners(); // Báo cho UI vẽ lại
+    }
+  }
 }

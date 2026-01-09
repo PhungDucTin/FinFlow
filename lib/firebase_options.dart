@@ -51,11 +51,11 @@ class DefaultFirebaseOptions {
   );
 
   static const FirebaseOptions android = FirebaseOptions(
-    apiKey: 'AIzaSyCsEads6v6gZnEERWqDub8zfxnTc3bAA04',
-    appId: '1:835620235882:android:b46129d3356b034a073813',
-    messagingSenderId: '835620235882',
-    projectId: 'finflow-4c0ea',
-    storageBucket: 'finflow-4c0ea.firebasestorage.app',
+    apiKey: 'AIzaSyCPTv79yQX_VhyIlIhR3TX5A6ssVJPj0ao',
+    appId: '1:287157964374:android:66874dcbafce0dd94135f7',
+    messagingSenderId: '287157964374',
+    projectId: 'finflow-app-e0da6',
+    storageBucket: 'finflow-app-e0da6.firebasestorage.app',
   );
 
   static const FirebaseOptions ios = FirebaseOptions(

@@ -8,8 +8,9 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'configs/constants.dart';
 import 'view_models/transaction_provider.dart';
 import 'services/auth_service.dart';
-import 'package:finflow/screens/dashboard/dashboard_screen.dart';
 import 'package:finflow/screens/login/login_screen.dart';
+import 'package:finflow/screens/add_transaction/add_transaction_screen.dart';
+import 'package:finflow/screens/bottom_navigation/bottom_navigation_screen.dart';
 import 'firebase_options.dart';
 
 void main() async {
@@ -21,14 +22,14 @@ void main() async {
       options: DefaultFirebaseOptions.currentPlatform,
     );
   } catch (e) {
-    print("⚠️ Lỗi Firebase: $e");
+    debugPrint("⚠️ Lỗi Firebase: $e");
   }
 
   // 2. Khởi tạo định dạng ngày tháng Tiếng Việt
   try {
     await initializeDateFormatting('vi_VN', null);
   } catch (e) {
-    print("⚠️ Lỗi intl: $e");
+    debugPrint("⚠️ Lỗi intl: $e");
   }
 
   runApp(
@@ -76,17 +77,19 @@ class MyApp extends StatelessWidget {
             return const Scaffold(body: Center(child: CircularProgressIndicator()));
           }
 
-          // Nếu có dữ liệu User -> Vào Dashboard
+          // Nếu có dữ liệu User -> Vào Bottom Navigation
           if (snapshot.hasData) {
-            return const DashboardScreen();
+            return const BottomNavigationScreen();
           }
 
           // Nếu không -> Về màn hình đăng nhập
           return const LoginScreen();
         },
       ), // Màn hình đăng nhập
-      routes: {'/dashboard': (context) => const DashboardScreen(),
-               '/login': (context) => const LoginScreen()
+      routes: {
+        '/dashboard': (context) => const BottomNavigationScreen(),
+        '/login': (context) => const LoginScreen(),
+        '/add-transaction': (context) => const AddTransactionScreen(),
       },
     );
   }

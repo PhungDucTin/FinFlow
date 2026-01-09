@@ -2,9 +2,7 @@ import 'package:finflow/models/transaction_model.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
-import '../add_transaction/add_transaction_screen.dart';
-import '../reports/reports_screen.dart';
-import '../settings/settings_screen.dart';
+import '../transaction_detail/transaction_detail_screen.dart';
 import '../../../view_models/transaction_provider.dart';
 import '../../../configs/constants.dart';
 
@@ -21,7 +19,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
     super.initState();
     // Gọi Provider để tải dữ liệu ngay khi mở màn hình
     // listen: false vì trong initState không được vẽ lại UI
-    Future.microtask(() => context.read<TransactionProvider>().loadData());
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        context.read<TransactionProvider>().loadData();
+      }
+    });
   }
 
   @override
@@ -35,35 +37,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
         title: const Text("FinFlow", style: TextStyle(color: Colors.white)),
         backgroundColor: AppColors.primary,
         centerTitle: true,
-        actions: [
-          IconButton(
-            tooltip: 'Báo cáo',
-            icon: const Icon(Icons.pie_chart, color: Colors.white),
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => const ReportsScreen()),
-              );
-            },
-          ),
-          IconButton(
-            tooltip: 'Cài đặt',
-            icon: const Icon(Icons.settings, color: Colors.white),
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => const SettingsScreen()),
-              );
-            },
-          ),
-        ],
       ),
       body: Column(
         children: [
           // 1. THẺ TỔNG QUAN (Balance Card)
           Container(
-            margin: const EdgeInsets.all(16),
-            padding: const EdgeInsets.all(20),
+            margin: EdgeInsets.all(ResponsiveSize.getPadding(context, 16)),
+            padding: EdgeInsets.all(ResponsiveSize.getPadding(context, 20)),
             decoration: BoxDecoration(
               color: AppColors.primary,
               borderRadius: BorderRadius.circular(15),
@@ -77,29 +57,34 @@ class _DashboardScreenState extends State<DashboardScreen> {
             ),
             child: Column(
               children: [
-                const Text(
+                Text(
                   "Tổng số dư",
-                  style: TextStyle(color: Colors.white70, fontSize: 16),
+                  style: TextStyle(
+                    color: Colors.white70,
+                    fontSize: ResponsiveSize.getFontSize(context, 16),
+                  ),
                 ),
-                const SizedBox(height: 10),
+                SizedBox(height: ResponsiveSize.getPadding(context, 10)),
                 Text(
                   formatter.format(provider.balance), // Lấy số dư từ Provider
-                  style: const TextStyle(
+                  style: TextStyle(
                     color: Colors.white,
-                    fontSize: 30,
+                    fontSize: ResponsiveSize.getFontSize(context, 30),
                     fontWeight: FontWeight.bold,
                   ),
                 ),
-                const SizedBox(height: 20),
+                SizedBox(height: ResponsiveSize.getPadding(context, 20)),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     _buildSummaryItem(
+                      context,
                       "Thu nhập",
                       provider.totalIncome,
                       Colors.greenAccent,
                     ),
                     _buildSummaryItem(
+                      context,
                       "Chi tiêu",
                       provider.totalExpense,
                       Colors.redAccent,
@@ -227,42 +212,121 @@ class _DashboardScreenState extends State<DashboardScreen> {
                           );
                         },
 
-                        // Nội dung hiển thị (Card cũ của bạn)
-                        child: Card(
-                          margin: const EdgeInsets.symmetric(
-                            horizontal: 16,
-                            vertical: 6,
+                        // Nội dung hiển thị (Card cập nhật)
+                        child: GestureDetector(
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => TransactionDetailScreen(
+                                  transaction: transaction,
+                                ),
+                              ),
+                            );
+                          },
+                          child: Card(
+                            margin: const EdgeInsets.symmetric(
+                              horizontal: 16,
+                              vertical: 6,
+                            ),
+                            child: Padding(
+                            padding: EdgeInsets.all(ResponsiveSize.getPadding(context, 12)),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                // Hàng 1: Icon + Tên danh mục + Giờ
+                                Row(
+                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    // Icon + Tên danh mục
+                                    Expanded(
+                                      child: Row(
+                                        children: [
+                                          CircleAvatar(
+                                            backgroundColor: isExpense
+                                                ? Colors.red[50]
+                                                : Colors.green[50],
+                                            radius: ResponsiveSize.getIconSize(context, 24),
+                                            child: Icon(
+                                              isExpense
+                                                  ? Icons.arrow_downward
+                                                  : Icons.arrow_upward,
+                                              color: isExpense
+                                                  ? AppColors.expense
+                                                  : AppColors.income,
+                                              size: ResponsiveSize.getIconSize(context, 20),
+                                            ),
+                                          ),
+                                          SizedBox(width: ResponsiveSize.getPadding(context, 12)),
+                                          Expanded(
+                                            child: Column(
+                                              crossAxisAlignment: CrossAxisAlignment.start,
+                                              children: [
+                                                Text(
+                                                  transaction.categoryName ?? 'Danh mục',
+                                                  style: TextStyle(
+                                                    fontSize: ResponsiveSize.getFontSize(context, 14),
+                                                    fontWeight: FontWeight.bold,
+                                                  ),
+                                                ),
+                                                if (transaction.note.isNotEmpty)
+                                                  Text(
+                                                    transaction.note,
+                                                    style: TextStyle(
+                                                      fontSize: ResponsiveSize.getFontSize(context, 12),
+                                                      color: Colors.grey,
+                                                    ),
+                                                    maxLines: 1,
+                                                    overflow: TextOverflow.ellipsis,
+                                                  ),
+                                              ],
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                    const SizedBox(width: 8),
+                                    // Giờ + Số tiền (Cột phải)
+                                    Column(
+                                      crossAxisAlignment: CrossAxisAlignment.end,
+                                      children: [
+                                        Text(
+                                          DateFormat('HH:mm').format(transaction.date),
+                                          style: TextStyle(
+                                            fontSize: ResponsiveSize.getFontSize(context, 12),
+                                            color: Colors.grey,
+                                            fontWeight: FontWeight.w500,
+                                          ),
+                                        ),
+                                        Text(
+                                          NumberFormat.currency(
+                                            locale: 'vi_VN',
+                                            symbol: 'đ',
+                                          ).format(transaction.amount),
+                                          style: TextStyle(
+                                            color: isExpense
+                                                ? AppColors.expense
+                                                : AppColors.income,
+                                            fontWeight: FontWeight.bold,
+                                            fontSize: ResponsiveSize.getFontSize(context, 13),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ],
+                                ),
+                                // Hàng 2: Ngày tháng năm (nếu cần)
+                                SizedBox(height: ResponsiveSize.getPadding(context, 8)),
+                                Text(
+                                  DateFormat('dd/MM/yyyy').format(transaction.date),
+                                  style: TextStyle(
+                                    fontSize: ResponsiveSize.getFontSize(context, 11),
+                                    color: Colors.grey,
+                                  ),
+                                ),
+                              ],
+                            ),
                           ),
-                          child: ListTile(
-                            leading: CircleAvatar(
-                              backgroundColor: isExpense
-                                  ? Colors.red[50]
-                                  : Colors.green[50],
-                              child: Icon(
-                                isExpense
-                                    ? Icons.arrow_downward
-                                    : Icons.arrow_upward,
-                                color: isExpense
-                                    ? AppColors.expense
-                                    : AppColors.income,
-                              ),
-                            ),
-                            title: Text(transaction.categoryName ?? 'Danh mục'),
-                            subtitle: Text(
-                              DateFormat('dd/MM/yyyy').format(transaction.date),
-                            ),
-                            trailing: Text(
-                              NumberFormat.currency(
-                                locale: 'vi_VN',
-                                symbol: 'đ',
-                              ).format(transaction.amount),
-                              style: TextStyle(
-                                color: isExpense
-                                    ? AppColors.expense
-                                    : AppColors.income,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
                           ),
                         ),
                       );
@@ -272,35 +336,28 @@ class _DashboardScreenState extends State<DashboardScreen> {
           ),
         ],
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          // Chuyển sang màn hình Thêm giao dịch
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) => const AddTransactionScreen(),
-            ),
-          );
-        },
-        backgroundColor: AppColors.primary,
-        child: const Icon(Icons.add, color: Colors.white),
-      ),
     );
   }
 
-  Widget _buildSummaryItem(String title, double amount, Color color) {
+  Widget _buildSummaryItem(BuildContext context, String title, double amount, Color color) {
     final formatter = NumberFormat.compact(
       locale: 'vi_VN',
     ); // Format số gọn (1tr, 200k)
     return Column(
       children: [
-        Text(title, style: const TextStyle(color: Colors.white70)),
+        Text(
+          title,
+          style: TextStyle(
+            color: Colors.white70,
+            fontSize: ResponsiveSize.getFontSize(context, 14),
+          ),
+        ),
         Text(
           formatter.format(amount),
           style: TextStyle(
             color: color,
             fontWeight: FontWeight.bold,
-            fontSize: 16,
+            fontSize: ResponsiveSize.getFontSize(context, 16),
           ),
         ),
       ],

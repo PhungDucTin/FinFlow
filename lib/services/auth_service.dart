@@ -6,11 +6,8 @@ class AuthService {
   final FirebaseAuth _firebaseAuth = FirebaseAuth.instance;
 
   // Client ID từ Firebase Console (Web Client ID)
-  // Bạn cần lấy từ: Firebase Console > Authentication > Sign-in method > Google > Web SDK configuration
-  // Hoặc: Google Cloud Console > APIs & Services > Credentials > OAuth 2.0 Client IDs (Web client)
-  // TODO: Thay thế bằng Web Client ID từ Firebase project mới của bạn
-  // Ví dụ: '835620235882-xxxxxxxxxxxxx.apps.googleusercontent.com'
-  static const String _webClientId = '287157964374-4log7egirecln1307f2mtgvgnhpjkp7r.apps.googleusercontent.com'; // Cần cập nhật Web Client ID từ Firebase Console
+  // Lấy từ Firebase Console > Authentication > Sign-in method > Google > Web SDK configuration
+  static const String _webClientId = '287157964374-4log7egirecln1307f2mtgvgnhpjkp7r.apps.googleusercontent.com';
 
   // Lấy user hiện tại
   User? get currentUser => _firebaseAuth.currentUser;

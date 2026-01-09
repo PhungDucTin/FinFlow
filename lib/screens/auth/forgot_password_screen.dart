@@ -116,7 +116,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
           'Nhập email để nhận link đặt lại mật khẩu từ Firebase',
           style: TextStyle(
             fontSize: 14,
-            color: AppColors.primary.withOpacity(0.7),
+            color: AppColors.primary.withValues(alpha: 0.7),
           ),
           textAlign: TextAlign.center,
         ),
@@ -190,7 +190,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
           decoration: InputDecoration(
             prefixIcon: Icon(icon, color: AppColors.primary),
             hintText: label,
-            hintStyle: TextStyle(color: AppColors.primary.withOpacity(0.5)),
+            hintStyle: TextStyle(color: AppColors.primary.withValues(alpha: 0.5)),
             contentPadding: const EdgeInsets.symmetric(vertical: 12),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),

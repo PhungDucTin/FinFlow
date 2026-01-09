@@ -15,6 +15,91 @@ class AppStrings {
   static const String dbName = "finflow_data.db"; // Tên file Cơ sở Dữ Liệu
 }
 
+// ===== RESPONSIVE HELPER FUNCTIONS =====
+class ResponsiveSize {
+  // Tính font size responsive dựa vào screen width
+  static double getFontSize(BuildContext context, double baseFontSize) {
+    final width = MediaQuery.of(context).size.width;
+    
+    if (width < 360) {
+      return baseFontSize * 0.8; // Điện thoại rất nhỏ
+    } else if (width < 480) {
+      return baseFontSize * 0.9; // Điện thoại nhỏ
+    } else if (width < 768) {
+      return baseFontSize; // Điện thoại bình thường
+    } else if (width < 1024) {
+      return baseFontSize * 1.2; // Tablet nhỏ
+    } else {
+      return baseFontSize * 1.4; // Tablet lớn / Desktop
+    }
+  }
+
+  // Tính padding responsive dựa vào screen width
+  static double getPadding(BuildContext context, double basePadding) {
+    final width = MediaQuery.of(context).size.width;
+    
+    if (width < 360) {
+      return basePadding * 0.75;
+    } else if (width < 480) {
+      return basePadding * 0.85;
+    } else if (width < 768) {
+      return basePadding;
+    } else if (width < 1024) {
+      return basePadding * 1.25;
+    } else {
+      return basePadding * 1.5;
+    }
+  }
+
+  // Tính icon size responsive
+  static double getIconSize(BuildContext context, double baseIconSize) {
+    final width = MediaQuery.of(context).size.width;
+    
+    if (width < 360) {
+      return baseIconSize * 0.8;
+    } else if (width < 480) {
+      return baseIconSize * 0.9;
+    } else if (width < 768) {
+      return baseIconSize;
+    } else if (width < 1024) {
+      return baseIconSize * 1.2;
+    } else {
+      return baseIconSize * 1.4;
+    }
+  }
+
+  // Kiểm tra thiết bị là mobile, tablet hay desktop
+  static DeviceType getDeviceType(BuildContext context) {
+    final width = MediaQuery.of(context).size.width;
+    
+    if (width < 600) {
+      return DeviceType.mobile;
+    } else if (width < 1024) {
+      return DeviceType.tablet;
+    } else {
+      return DeviceType.desktop;
+    }
+  }
+
+  // Tính aspect ratio cho grid responsive
+  static double getGridAspectRatio(BuildContext context, int columns) {
+    final width = MediaQuery.of(context).size.width;
+    
+    if (width < 360) {
+      return 0.7;
+    } else if (width < 480) {
+      return 0.75;
+    } else if (width < 768) {
+      return 0.85;
+    } else {
+      return 1.0;
+    }
+  }
+}
+
+enum DeviceType { mobile, tablet, desktop }
+
+// ===== HELPER FUNCTIONS (CŨ) =====
 IconData getIconByKey(String key) {
   switch (key) {
     // --- Chi tiêu ---
@@ -66,4 +151,20 @@ Color getDarkerColor(Color color) {
       .withSaturation((hsvColor.saturation * 1.8).clamp(0.0, 1.0)) 
       .withValue((hsvColor.value * 0.8).clamp(0.0, 1.0))
       .toColor();
+}
+
+// Format tiền tệ Việt Nam (thêm dấu chấm phân cách hàng nghìn)
+String formatCurrencyVN(String amount) {
+  final numAmount = int.tryParse(amount) ?? 0;
+  final str = numAmount.toString();
+  final buffer = StringBuffer();
+  
+  for (int i = 0; i < str.length; i++) {
+    if (i > 0 && (str.length - i) % 3 == 0) {
+      buffer.write('.');
+    }
+    buffer.write(str[i]);
+  }
+  
+  return buffer.toString();
 }

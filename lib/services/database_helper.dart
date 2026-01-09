@@ -1,4 +1,3 @@
-import 'package:flutter/rendering.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart';
 import '../models/category_model.dart';
@@ -291,13 +290,13 @@ Future _seedData(Database db) async {
   }
 
   // 4. Cập nhật giao dịch
-  Future<int> updateTransaction(TransactionModel transaction) async {
+ Future<int> updateTransaction(TransactionModel transaction) async {
     final db = await instance.database;
-    return await db.update(
-      'transactions',
+    return db.update(
+      'transactions', // Tên bảng
       transaction.toMap(),
-      where: 'id = ?',
-      whereArgs: [transaction.id],
+      where: 'id = ?', // Điều kiện tìm kiếm theo ID
+      whereArgs: [transaction.id], // Truyền ID vào
     );
   }
 
@@ -438,6 +437,17 @@ Future _seedData(Database db) async {
     return await db.delete('categories', where: 'id = ?', whereArgs: [id]);
   }
 
+  // 12a. Cập nhật danh mục
+  Future<int> updateCategory(CategoryModel category) async {
+    final db = await instance.database;
+    return await db.update(
+      'categories',
+      category.toMap(),
+      where: 'id = ?',
+      whereArgs: [category.id],
+    );
+  }
+
   // 13. Lấy danh sách ghi chú duy nhất đã từng nhập cho một danh mục cụ thể
 Future<List<String>> getUniqueNotesByCategory(int categoryId) async {
   final db = await instance.database;
@@ -449,4 +459,41 @@ Future<List<String>> getUniqueNotesByCategory(int categoryId) async {
   
   return result.map((row) => row['note'] as String).toList();
 }
+  // 14. Lấy thông tin danh mục theo ID
+Future<CategoryModel?> getCategoryById(int id) async {
+    final db = await instance.database;
+    final result = await db.query(
+      'categories',
+      where: 'id = ?',
+      whereArgs: [id],
+    );
+
+    if (result.isNotEmpty) {
+      return CategoryModel.fromMap(result.first);
+    } else {
+      return null;
+    }
+  }
+
+// 15. Lấy dữ liệu chi tiêu theo ngày để vẽ biểu đồ đường
+Future<List<Map<String, dynamic>>> getDailyExpenseStats(DateTime start, DateTime end, String userId) async {
+    final db = await instance.database;
+
+    // QUAN TRỌNG: Database của bạn lưu ngày dạng TEXT (ISO8601), 
+    // nên phải convert sang String để so sánh, không dùng millisecondsSinceEpoch.
+    String startDateStr = start.toIso8601String();
+    String endDateStr = end.toIso8601String();
+
+    // Sử dụng rawQuery để JOIN bảng transactions và categories
+    // Logic: Lấy giao dịch (t) có danh mục (c) mà loại của danh mục đó là 'expense'
+    final result = await db.rawQuery('''
+      SELECT t.date, t.amount
+      FROM transactions t
+      INNER JOIN categories c ON t.category_id = c.id
+      WHERE c.type = ? AND t.user_id = ? AND t.date >= ? AND t.date <= ?
+      ORDER BY t.date ASC
+    ''', ['expense', userId, startDateStr, endDateStr]);
+
+    return result;
+  }
 }

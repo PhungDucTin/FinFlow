@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 import '../../services/auth_service.dart';
 import '../../view_models/transaction_provider.dart';
 import '../reports/reports_screen.dart';
+import '../manage_categories/manage_categories_screen.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -15,14 +16,18 @@ class SettingsScreen extends StatefulWidget {
 
 class _SettingsScreenState extends State<SettingsScreen> {
   bool _isEnglish = false;
-  bool _reminderEnabled = false;
+
+  @override
+  void initState() {
+    super.initState();
+  }
 
   @override
   Widget build(BuildContext context) {
     final user = AuthService().currentUser;
     final balance = context
         .watch<TransactionProvider>()
-        .balance; // Lấy số dư thực tế
+        .walletBalance; // Lấy số dư thực tế
 
     return Scaffold(
       backgroundColor: const Color(0xFFE0F2F1), // Nền xanh mint nhạt
@@ -93,13 +98,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       ),
                       const SizedBox(height: 8),
                       Text(
-                        '${balance.toStringAsFixed(0)} đ',
-                        style: TextStyle(
-                          fontSize: 26,
-                          fontWeight: FontWeight.bold,
-                          color: AppColors.primary,
-                        ),
-                      ),
+  // Thêm logic Regex để chèn dấu chấm vào mỗi 3 số 0
+  '${balance.toStringAsFixed(0).replaceAllMapped(RegExp(r'\B(?=(\d{3})+(?!\d))'), (match) => '.')} đ',
+  style: TextStyle(
+    fontSize: 26,
+    fontWeight: FontWeight.bold,
+    color: AppColors.primary,
+  ),
+),
                     ],
                   ),
                 ),
@@ -135,9 +141,21 @@ class _SettingsScreenState extends State<SettingsScreen> {
               ),
               const SizedBox(height: 12),
               _buildMenuCard(
+                icon: Icons.category,
+                title: 'Quản lý danh mục',
+                subtitle: 'Thêm hoặc xoá các danh mục giao dịch',
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => const ManageCategoriesScreen()),
+                  );
+                },
+              ),
+              const SizedBox(height: 12),
+              _buildMenuCard(
                 icon: Icons.settings,
                 title: 'Cài đặt',
-                subtitle: 'Ngôn ngữ, nhắc nhở ghi chép chi tiêu',
+                subtitle: 'Ngôn ngữ và các tùy chọn khác',
                 onTap: _openSettingsBottomSheet,
               ),
               const SizedBox(height: 12),
@@ -186,8 +204,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
             children: [
               CircleAvatar(
                 radius: 20,
-                backgroundColor: (iconColor ?? AppColors.primary).withOpacity(
-                  0.1,
+                backgroundColor: (iconColor ?? AppColors.primary).withValues(
+                  alpha: 0.1,
                 ),
                 child: Icon(icon, color: iconColor ?? AppColors.primary),
               ),
@@ -252,7 +270,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               SwitchListTile(
                 title: const Text('Ngôn ngữ'),
                 subtitle: Text(_isEnglish ? 'English' : 'Tiếng Việt'),
-                activeColor: AppColors.primary,
+                activeThumbColor: AppColors.primary,
                 value: _isEnglish,
                 onChanged: (value) {
                   setState(() => _isEnglish = value);
@@ -261,28 +279,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     SnackBar(
                       content: Text(
                         'Đã đổi ngôn ngữ sang ${_isEnglish ? 'English' : 'Tiếng Việt'} (áp dụng cho các màn hình hỗ trợ đa ngôn ngữ).',
-                      ),
-                      duration: const Duration(seconds: 2),
-                    ),
-                  );
-                },
-              ),
-              SwitchListTile(
-                title: const Text('Nhắc nhở ghi chép chi tiêu'),
-                subtitle: const Text(
-                  'Gửi thông báo nhắc bạn cập nhật giao dịch hàng ngày.',
-                ),
-                activeColor: AppColors.primary,
-                value: _reminderEnabled,
-                onChanged: (value) {
-                  setState(() => _reminderEnabled = value);
-                  Navigator.pop(ctx);
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text(
-                        _reminderEnabled
-                            ? 'Đã bật nhắc nhở. Bạn có thể cấu hình chi tiết sau.'
-                            : 'Đã tắt nhắc nhở.',
                       ),
                       duration: const Duration(seconds: 2),
                     ),

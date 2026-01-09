@@ -21,6 +21,23 @@ class _SignUpScreenState extends State<SignUpScreen> {
   bool _obscureConfirmPassword = true;
   bool _isLoading = false;
 
+  // 1. Validate Email cơ bản
+  bool _isValidEmail(String email) {
+    return RegExp(r"^[a-zA-Z0-9.]+@[a-zA-Z0-9]+\.[a-zA-Z]+").hasMatch(email);
+  }
+
+  // 2. Validate Password CHUẨN CHỐNG BRUTE FORCE
+  // Yêu cầu: 8 ký tự, có Chữ hoa, Chữ thường, Số và Ký tự đặc biệt
+  String? _validatePassword(String password) {
+    if (password.length < 8) return 'Mật khẩu phải từ 8 ký tự trở lên';
+    if (!password.contains(RegExp(r'[A-Z]'))) return 'Thiếu chữ in hoa (A-Z)';
+    if (!password.contains(RegExp(r'[a-z]'))) return 'Thiếu chữ thường (a-z)';
+    if (!password.contains(RegExp(r'[0-9]'))) return 'Thiếu số (0-9)';
+    if (!password.contains(RegExp(r'[!@#$%^&*(),.?":{}|<>]')))
+      return 'Thiếu ký tự đặc biệt (!@#...)';
+    return null; // Mật khẩu an toàn
+  }
+
   @override
   void dispose() {
     _nameController.dispose();
@@ -30,26 +47,33 @@ class _SignUpScreenState extends State<SignUpScreen> {
     super.dispose();
   }
 
-  Future<void> _handleSignUp() async {
-    // Validate
-    if (_nameController.text.isEmpty) {
+ Future<void> _handleSignUp() async {
+    // 1. Sanitize input (Loại bỏ khoảng trắng thừa)
+    final name = _nameController.text.trim();
+    final email = _emailController.text.trim();
+    final password = _passwordController.text;
+    final confirmPass = _confirmPasswordController.text;
+
+    // 2. Validate cơ bản
+    if (name.isEmpty) {
       _showError('Vui lòng nhập tên');
       return;
     }
-    if (_emailController.text.isEmpty) {
-      _showError('Vui lòng nhập email');
+    if (email.isEmpty || !_isValidEmail(email)) {
+      _showError('Email không hợp lệ');
       return;
     }
-    if (_passwordController.text.isEmpty) {
-      _showError('Vui lòng nhập mật khẩu');
+
+    // 3. QUAN TRỌNG: Gọi hàm kiểm tra độ mạnh mật khẩu
+    // (Code cũ của bạn đang bỏ qua bước này)
+    String? passwordError = _validatePassword(password);
+    if (passwordError != null) {
+      _showError(passwordError); // Báo lỗi cụ thể (Thiếu chữ hoa, số...)
       return;
     }
-    if (_passwordController.text != _confirmPasswordController.text) {
+
+    if (password != confirmPass) {
       _showError('Mật khẩu không trùng khớp');
-      return;
-    }
-    if (_passwordController.text.length < 6) {
-      _showError('Mật khẩu phải có ít nhất 6 ký tự');
       return;
     }
 
@@ -57,12 +81,13 @@ class _SignUpScreenState extends State<SignUpScreen> {
 
     try {
       await _authService.signUpWithEmail(
-        email: _emailController.text,
-        password: _passwordController.text,
-        displayName: _nameController.text,
+        email: email,
+        password: password,
+        displayName: name,
       );
 
       if (mounted) {
+        // Vào thẳng Dashboard (Bỏ qua xác thực email theo yêu cầu demo)
         Navigator.pushReplacementNamed(context, '/dashboard');
       }
     } catch (e) {
@@ -265,14 +290,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          label,
-          style: TextStyle(
-            color: AppColors.primary,
-            fontSize: 14,
-            fontWeight: FontWeight.w600,
-          ),
-        ),
+        Text(label, style: TextStyle(color: AppColors.primary, fontSize: 14, fontWeight: FontWeight.w600)),
         const SizedBox(height: 8),
         TextField(
           controller: controller,
@@ -281,20 +299,11 @@ class _SignUpScreenState extends State<SignUpScreen> {
           decoration: InputDecoration(
             prefixIcon: Icon(icon, color: AppColors.primary),
             hintText: label,
-            hintStyle: TextStyle(color: AppColors.primary.withOpacity(0.5)),
+            hintStyle: TextStyle(color: AppColors.primary.withValues(alpha: 0.5)),
             contentPadding: const EdgeInsets.symmetric(vertical: 12),
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide(color: AppColors.primary, width: 1.5),
-            ),
-            enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide(color: AppColors.primary, width: 1.5),
-            ),
-            focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide(color: AppColors.accent, width: 2),
-            ),
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: AppColors.primary, width: 1.5)),
+            enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: AppColors.primary, width: 1.5)),
+            focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: AppColors.accent, width: 2)),
             filled: true,
             fillColor: Colors.white,
           ),
@@ -312,14 +321,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          label,
-          style: TextStyle(
-            color: AppColors.primary,
-            fontSize: 14,
-            fontWeight: FontWeight.w600,
-          ),
-        ),
+        Text(label, style: TextStyle(color: AppColors.primary, fontSize: 14, fontWeight: FontWeight.w600)),
         const SizedBox(height: 8),
         TextField(
           controller: controller,
@@ -329,28 +331,24 @@ class _SignUpScreenState extends State<SignUpScreen> {
             prefixIcon: Icon(Icons.lock_outline, color: AppColors.primary),
             suffixIcon: GestureDetector(
               onTap: onToggle,
-              child: Icon(
-                obscureText ? Icons.visibility_off : Icons.visibility,
-                color: AppColors.primary,
-              ),
+              child: Icon(obscureText ? Icons.visibility_off : Icons.visibility, color: AppColors.primary),
             ),
             hintText: label,
-            hintStyle: TextStyle(color: AppColors.primary.withOpacity(0.5)),
+            hintStyle: TextStyle(color: AppColors.primary.withValues(alpha: 0.5)),
             contentPadding: const EdgeInsets.symmetric(vertical: 12),
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide(color: AppColors.primary, width: 1.5),
-            ),
-            enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide(color: AppColors.primary, width: 1.5),
-            ),
-            focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide(color: AppColors.accent, width: 2),
-            ),
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: AppColors.primary, width: 1.5)),
+            enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: AppColors.primary, width: 1.5)),
+            focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: AppColors.accent, width: 2)),
             filled: true,
             fillColor: Colors.white,
+
+            // --- THÊM VÀO ĐÂY MỚI ĐÚNG ---
+            helperText: label == 'Mật khẩu' 
+                ? "Yêu cầu: 8 ký tự, Hoa, Thường, Số, Ký tự đặc biệt" 
+                : null,
+            helperStyle: TextStyle(fontSize: 11, color: Colors.grey.shade600),
+            helperMaxLines: 2,
+            // -----------------------------
           ),
         ),
       ],

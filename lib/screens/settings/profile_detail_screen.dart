@@ -94,7 +94,7 @@ class _ProfileDetailScreenState extends State<ProfileDetailScreen> {
             // Badge Hạng thành viên (Gợi ý tương lai)
             Chip(
               label: Text(totalTransactions > 10 ? 'Thành viên Bạc' : 'Thành viên Mới'),
-              backgroundColor: AppColors.primary.withOpacity(0.1),
+              backgroundColor: AppColors.primary.withValues(alpha: 0.1),
               labelStyle: TextStyle(color: AppColors.primary, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 25),
