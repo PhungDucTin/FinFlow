@@ -51,6 +51,7 @@ class AuthService {
             )
           : GoogleSignIn(
               scopes: ['email'], // Chỉ cần email, không cần profile để tránh People API
+              serverClientId: _webClientId, 
             );
 
       // 1. Mở màn hình chọn tài khoản Google

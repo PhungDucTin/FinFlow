@@ -301,17 +301,22 @@ Future _seedData(Database db) async {
   }
 
   // 5. Lấy giao dịch trong một tháng cụ thể (Ví dụ: Tháng 10/2023)
-  Future<List<TransactionModel>> getTransactionsByMonth(
+ Future<List<TransactionModel>> getTransactionsByMonth(
     int month,
     int year,
     String userId,
   ) async {
     final db = await instance.database;
 
-    // Tạo chuỗi ngày đầu tháng và cuối tháng để lọc
+    // Ngày đầu tháng: 2026-01-01 00:00:00
     String startDate = DateTime(year, month, 1).toIso8601String();
-    // Lấy ngày đầu của tháng sau trừ đi 1 để ra ngày cuối của tháng này
-    String endDate = DateTime(year, month + 1, 0).toIso8601String();
+    
+    // --- SỬA ĐOẠN NÀY ---
+    // Lấy ngày cuối tháng: Tạo ngày 0 của tháng sau = ngày cuối tháng này
+    DateTime lastDay = DateTime(year, month + 1, 0);
+    // Ép giờ về giây cuối cùng: 2026-01-31 23:59:59
+    String endDate = DateTime(lastDay.year, lastDay.month, lastDay.day, 23, 59, 59).toIso8601String();
+    // --------------------
 
     final result = await db.rawQuery(
       '''
@@ -321,7 +326,7 @@ Future _seedData(Database db) async {
         WHERE t.user_id = ? AND t.date >= ? AND t.date <= ?
         ORDER BY t.date DESC
       ''',
-      [userId,startDate, endDate],
+      [userId, startDate, endDate],
     );
     return result.map((json) => TransactionModel.fromMap(json)).toList();
   }

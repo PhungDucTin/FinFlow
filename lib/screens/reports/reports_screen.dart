@@ -1,10 +1,13 @@
-import 'dart:math'; // Thêm thư viện Toán học để tính Max
+import 'dart:math'; // Để dùng hàm max()
 import 'package:finflow/configs/constants.dart';
 import 'package:finflow/services/database_helper.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+
+// Định nghĩa các loại báo cáo
+enum ReportType { day, week, month }
 
 class ReportsScreen extends StatefulWidget {
   const ReportsScreen({super.key});
@@ -14,7 +17,10 @@ class ReportsScreen extends StatefulWidget {
 }
 
 class _ReportsScreenState extends State<ReportsScreen> {
-  DateTime _currentMonth = DateTime(DateTime.now().year, DateTime.now().month);
+  // Dùng _selectedDate làm mốc thời gian duy nhất
+  DateTime _selectedDate = DateTime.now();
+  ReportType _currentType = ReportType.month; // Mặc định xem theo Tháng
+
   bool _isLoading = true;
   List<Map<String, dynamic>> _expenseStats = [];
   double _totalIncome = 0;
@@ -23,9 +29,12 @@ class _ReportsScreenState extends State<ReportsScreen> {
   @override
   void initState() {
     super.initState();
-    _loadData();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _loadData();
+    });
   }
 
+  // Hàm tải dữ liệu (Logic chuẩn cho Ngày/Tuần/Tháng)
   Future<void> _loadData() async {
     final user = FirebaseAuth.instance.currentUser;
     if (user == null) return;
@@ -33,17 +42,49 @@ class _ReportsScreenState extends State<ReportsScreen> {
 
     setState(() => _isLoading = true);
 
-    final start = DateTime(_currentMonth.year, _currentMonth.month, 1);
-    final end = DateTime(
-      _currentMonth.year,
-      _currentMonth.month + 1,
-      0,
-      23,
-      59,
-      59,
-    ); // Cuối ngày cuối tháng
+    DateTime start;
+    DateTime end;
 
-    // ... (Code cũ lấy Pie/Bar chart giữ nguyên) ...
+    // --- LOGIC TÍNH THỜI GIAN ---
+    if (_currentType == ReportType.day) {
+      // Ngày: 00:00:00 -> 23:59:59
+      start = DateTime(
+        _selectedDate.year,
+        _selectedDate.month,
+        _selectedDate.day,
+      );
+      end = DateTime(
+        _selectedDate.year,
+        _selectedDate.month,
+        _selectedDate.day,
+        23,
+        59,
+        59,
+      );
+    } else if (_currentType == ReportType.week) {
+      // Tuần: Thứ 2 -> Chủ Nhật
+      // weekday: 1 (Mon) -> 7 (Sun)
+      DateTime monday = _selectedDate.subtract(
+        Duration(days: _selectedDate.weekday - 1),
+      );
+      start = DateTime(monday.year, monday.month, monday.day);
+
+      DateTime sunday = monday.add(const Duration(days: 6));
+      end = DateTime(sunday.year, sunday.month, sunday.day, 23, 59, 59);
+    } else {
+      // Tháng: Ngày 1 -> Ngày cuối tháng
+      start = DateTime(_selectedDate.year, _selectedDate.month, 1);
+      end = DateTime(
+        _selectedDate.year,
+        _selectedDate.month + 1,
+        0,
+        23,
+        59,
+        59,
+      );
+    }
+
+    // --- GỌI DATABASE ---
     final expenseStats = await DatabaseHelper.instance.getCategoryStats(
       'expense',
       start,
@@ -72,28 +113,75 @@ class _ReportsScreenState extends State<ReportsScreen> {
     });
   }
 
-  void _changeMonth(int delta) {
+  Future<void> _selectDate() async {
+    final DateTime? picked = await showDatePicker(
+      context: context,
+      initialDate: _selectedDate, // Ngày đang chọn
+      firstDate: DateTime(2020), // Ngày bắt đầu cho phép chọn
+      lastDate: DateTime(2030), // Ngày kết thúc cho phép chọn
+      locale: const Locale('vi', 'VN'), // Hiển thị tiếng Việt (nếu đã cấu hình)
+      helpText: _currentType == ReportType.month
+          ? 'CHỌN MỘT NGÀY BẤT KỲ TRONG THÁNG' // Hướng dẫn nếu đang xem theo tháng
+          : 'CHỌN NGÀY',
+      builder: (context, child) {
+        // Tùy chỉnh màu sắc lịch cho đồng bộ với App
+        return Theme(
+          data: Theme.of(context).copyWith(
+            colorScheme: ColorScheme.light(
+              primary: AppColors.primary, // Màu đầu lịch
+              onPrimary: Colors.white, // Màu chữ trên đầu lịch
+              onSurface: Colors.black, // Màu số ngày
+            ),
+            textButtonTheme: TextButtonThemeData(
+              style: TextButton.styleFrom(
+                foregroundColor: AppColors.primary, // Màu nút OK/Cancel
+              ),
+            ),
+          ),
+          child: child!,
+        );
+      },
+    );
+
+    if (picked != null && picked != _selectedDate) {
+      setState(() {
+        _selectedDate = picked;
+      });
+      _loadData(); // Tải lại dữ liệu theo ngày mới chọn
+    }
+  }
+
+  // Hàm thay đổi thời gian (Tăng/Giảm)
+  void _changeTime(int delta) {
     setState(() {
-      _currentMonth = DateTime(_currentMonth.year, _currentMonth.month + delta);
+      if (_currentType == ReportType.day) {
+        _selectedDate = _selectedDate.add(Duration(days: delta));
+      } else if (_currentType == ReportType.week) {
+        _selectedDate = _selectedDate.add(Duration(days: delta * 7));
+      } else {
+        // Cộng trừ tháng
+        _selectedDate = DateTime(
+          _selectedDate.year,
+          _selectedDate.month + delta,
+          1,
+        );
+      }
     });
     _loadData();
   }
 
-  // Hàm chọn tháng nhanh bằng lịch
-  void _pickMonth() async {
-    final picked = await showDatePicker(
-      context: context,
-      initialDate: _currentMonth,
-      firstDate: DateTime(2020),
-      lastDate: DateTime(2030),
-      helpText: "CHỌN THÁNG CẦN XEM",
-      // Mẹo: Dùng DatePicker mặc định, người dùng chọn ngày bất kỳ trong tháng là được
-    );
-    if (picked != null && picked != _currentMonth) {
-      setState(() {
-        _currentMonth = DateTime(picked.year, picked.month);
-      });
-      _loadData();
+  // Hàm hiển thị Label thời gian
+  String _getDateLabel() {
+    if (_currentType == ReportType.day) {
+      return DateFormat('dd/MM/yyyy').format(_selectedDate);
+    } else if (_currentType == ReportType.week) {
+      DateTime monday = _selectedDate.subtract(
+        Duration(days: _selectedDate.weekday - 1),
+      );
+      DateTime sunday = monday.add(const Duration(days: 6));
+      return '${DateFormat('dd/MM').format(monday)} - ${DateFormat('dd/MM/yyyy').format(sunday)}';
+    } else {
+      return DateFormat('MM/yyyy').format(_selectedDate);
     }
   }
 
@@ -106,14 +194,14 @@ class _ReportsScreenState extends State<ReportsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final monthText = DateFormat('MM/yyyy').format(_currentMonth);
+    // Đã xóa dòng "final monthText = ..." gây lỗi
     final currencyFormatter = NumberFormat.currency(
       locale: 'vi_VN',
       symbol: 'đ',
     );
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F7FA), // Thêm màu nền xám nhẹ cho sạch
+      backgroundColor: const Color(0xFFF5F7FA),
       appBar: AppBar(
         title: const Text(
           'Báo cáo thống kê',
@@ -127,7 +215,6 @@ class _ReportsScreenState extends State<ReportsScreen> {
         child: _isLoading
             ? const Center(child: CircularProgressIndicator())
             : RefreshIndicator(
-                // Cho phép kéo xuống để reload
                 onRefresh: _loadData,
                 child: SingleChildScrollView(
                   padding: const EdgeInsets.all(16),
@@ -135,7 +222,24 @@ class _ReportsScreenState extends State<ReportsScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      // --- 1. THANH CHỌN THÁNG ---
+                      // --- 1. THANH CHỌN TAB (Ngày | Tuần | Tháng) ---
+                      Container(
+                        margin: const EdgeInsets.only(bottom: 16),
+                        padding: const EdgeInsets.all(4),
+                        decoration: BoxDecoration(
+                          color: Colors.grey.shade200,
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Row(
+                          children: [
+                            _buildTabButton("Ngày", ReportType.day),
+                            _buildTabButton("Tuần", ReportType.week),
+                            _buildTabButton("Tháng", ReportType.month),
+                          ],
+                        ),
+                      ),
+
+                      // --- 2. THANH ĐIỀU HƯỚNG THỜI GIAN ---
                       Container(
                         padding: const EdgeInsets.symmetric(
                           vertical: 8,
@@ -146,9 +250,9 @@ class _ReportsScreenState extends State<ReportsScreen> {
                           borderRadius: BorderRadius.circular(12),
                           boxShadow: [
                             BoxShadow(
-                              color: Colors.black12,
-                              blurRadius: 4,
-                              offset: Offset(0, 2),
+                              color: Colors.black.withOpacity(0.05),
+                              blurRadius: 10,
+                              offset: const Offset(0, 4),
                             ),
                           ],
                         ),
@@ -156,47 +260,52 @@ class _ReportsScreenState extends State<ReportsScreen> {
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
                             IconButton(
-                              onPressed: () => _changeMonth(-1),
+                              onPressed: () => _changeTime(-1),
                               icon: const Icon(
                                 Icons.chevron_left,
                                 color: Colors.grey,
                               ),
                             ),
                             GestureDetector(
-                              onTap: _pickMonth, // Cho phép ấn vào để chọn lịch
-                              child: Column(
-                                children: [
-                                  const Text(
-                                    'Thời gian',
-                                    style: TextStyle(
-                                      fontSize: 12,
-                                      color: Colors.grey,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 4),
-                                  Row(
-                                    children: [
-                                      const Icon(
-                                        Icons.calendar_month,
-                                        size: 16,
+                              onTap: _selectDate, // Gọi hàm mở lịch khi bấm
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 12,
+                                  vertical: 6,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: AppColors.primary.withOpacity(
+                                    0.1,
+                                  ), // Thêm nền nhẹ cho đẹp
+                                  borderRadius: BorderRadius.circular(20),
+                                ),
+                                child: Row(
+                                  children: [
+                                    Icon(
+                                      Icons.calendar_month,
+                                      size: 18,
+                                      color: AppColors.primary,
+                                    ), // Thêm icon lịch
+                                    const SizedBox(width: 8),
+                                    Text(
+                                      _getDateLabel(),
+                                      style: TextStyle(
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.bold,
                                         color: AppColors.primary,
                                       ),
-                                      const SizedBox(width: 6),
-                                      Text(
-                                        monthText,
-                                        style: TextStyle(
-                                          fontSize: 18,
-                                          fontWeight: FontWeight.bold,
-                                          color: AppColors.primary,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ],
+                                    ),
+                                    const SizedBox(width: 4),
+                                    Icon(
+                                      Icons.arrow_drop_down,
+                                      color: AppColors.primary,
+                                    ), // Icon mũi tên nhỏ báo hiệu dropdown
+                                  ],
+                                ),
                               ),
                             ),
                             IconButton(
-                              onPressed: () => _changeMonth(1),
+                              onPressed: () => _changeTime(1),
                               icon: const Icon(
                                 Icons.chevron_right,
                                 color: Colors.grey,
@@ -207,7 +316,7 @@ class _ReportsScreenState extends State<ReportsScreen> {
                       ),
                       const SizedBox(height: 16),
 
-                      // --- 2. TỔNG QUAN THU CHI ---
+                      // --- 3. TỔNG QUAN THU CHI ---
                       Card(
                         elevation: 2,
                         shape: RoundedRectangleBorder(
@@ -233,7 +342,7 @@ class _ReportsScreenState extends State<ReportsScreen> {
                                 width: 1,
                                 height: 40,
                                 color: Colors.grey.shade300,
-                              ), // Đường kẻ dọc
+                              ),
                               Expanded(
                                 child: _buildSummaryItem(
                                   'Chi tiêu',
@@ -249,7 +358,7 @@ class _ReportsScreenState extends State<ReportsScreen> {
                       ),
                       const SizedBox(height: 24),
 
-                      // --- 3. BIỂU ĐỒ TRÒN (CƠ CẤU CHI TIÊU) ---
+                      // --- 4. BIỂU ĐỒ TRÒN ---
                       Text(
                         'Cơ cấu chi tiêu',
                         style: TextStyle(
@@ -259,7 +368,6 @@ class _ReportsScreenState extends State<ReportsScreen> {
                         ),
                       ),
                       const SizedBox(height: 16),
-
                       Container(
                         padding: const EdgeInsets.all(16),
                         decoration: BoxDecoration(
@@ -267,20 +375,19 @@ class _ReportsScreenState extends State<ReportsScreen> {
                           borderRadius: BorderRadius.circular(16),
                           boxShadow: [
                             BoxShadow(
-                              color: Colors.black.withValues(alpha: 0.05),
+                              color: Colors.black.withOpacity(0.05),
                               blurRadius: 10,
                             ),
                           ],
                         ),
                         child: Column(
                           children: [
-                            // FIX: Tăng chiều cao lên 300 để không bị cắt hình
                             SizedBox(
                               height: 300,
                               child: _expenseStats.isEmpty
                                   ? Center(
                                       child: Text(
-                                        'Chưa có chi tiêu trong tháng này',
+                                        'Chưa có chi tiêu',
                                         style: TextStyle(
                                           color: Colors.grey.shade500,
                                         ),
@@ -289,74 +396,47 @@ class _ReportsScreenState extends State<ReportsScreen> {
                                   : PieChart(
                                       PieChartData(
                                         sectionsSpace: 2,
-                                        centerSpaceRadius: 40, // Lỗ tròn ở giữa
-                                        startDegreeOffset:
-                                            -90, // Xoay để bắt đầu từ đỉnh
+                                        centerSpaceRadius: 40,
+                                        startDegreeOffset: -90,
                                         sections: _buildPieSections(),
                                       ),
                                     ),
                             ),
                             const SizedBox(height: 20),
                             // Chú thích (Legend)
-                            Wrap(
-                              spacing: 12,
-                              runSpacing: 8,
-                              children: _expenseStats.map((e) {
-                                final color = _colorFromHex(e['color_hex']);
-                                final name = e['name'] as String;
-                                final total = (e['total'] as num).toDouble();
-                                final percent = _totalExpense > 0
-                                    ? (total / _totalExpense * 100)
-                                          .toStringAsFixed(1)
-                                    : "0";
-
-                                return Container(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 10,
-                                    vertical: 6,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    color: color.withValues(alpha: 0.1),
-                                    borderRadius: BorderRadius.circular(20),
-                                    border: Border.all(
-                                      color: color.withValues(alpha: 0.3),
+                            if (_expenseStats.isNotEmpty)
+                              Wrap(
+                                spacing: 8,
+                                runSpacing: 8,
+                                children: _expenseStats.map((e) {
+                                  final color = _colorFromHex(e['color_hex']);
+                                  final name = e['name'] as String;
+                                  final total = (e['total'] as num).toDouble();
+                                  final percent = _totalExpense > 0
+                                      ? (total / _totalExpense * 100)
+                                            .toStringAsFixed(1)
+                                      : "0";
+                                  return Chip(
+                                    avatar: CircleAvatar(
+                                      backgroundColor: color,
+                                      radius: 5,
                                     ),
-                                  ),
-                                  child: Row(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      CircleAvatar(
-                                        backgroundColor: color,
-                                        radius: 5,
-                                      ),
-                                      const SizedBox(width: 6),
-                                      Text(
-                                        name,
-                                        style: const TextStyle(
-                                          fontSize: 12,
-                                          fontWeight: FontWeight.w600,
-                                        ),
-                                      ),
-                                      const SizedBox(width: 4),
-                                      Text(
-                                        "($percent%)",
-                                        style: TextStyle(
-                                          fontSize: 12,
-                                          color: Colors.grey.shade700,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                );
-                              }).toList(),
-                            ),
+                                    label: Text(
+                                      "$name ($percent%)",
+                                      style: const TextStyle(fontSize: 11),
+                                    ),
+                                    backgroundColor: color.withOpacity(0.1),
+                                    side: BorderSide.none,
+                                  );
+                                }).toList(),
+                              ),
                           ],
                         ),
                       ),
 
                       const SizedBox(height: 24),
 
-                      // --- 4. BIỂU ĐỒ CỘT (SO SÁNH) ---
+                      // --- 5. BIỂU ĐỒ CỘT SO SÁNH ---
                       Text(
                         'So sánh Thu - Chi',
                         style: TextStyle(
@@ -366,21 +446,15 @@ class _ReportsScreenState extends State<ReportsScreen> {
                         ),
                       ),
                       const SizedBox(height: 16),
-
                       Container(
-                        height: 250,
-                        padding: const EdgeInsets.fromLTRB(
-                          16,
-                          32,
-                          16,
-                          16,
-                        ), // Padding top nhiều hơn để chừa chỗ cho label cột
+                        height: 300,
+                        padding: const EdgeInsets.fromLTRB(16, 32, 16, 16),
                         decoration: BoxDecoration(
                           color: Colors.white,
                           borderRadius: BorderRadius.circular(16),
                           boxShadow: [
                             BoxShadow(
-                              color: Colors.black.withValues(alpha: 0.05),
+                              color: Colors.black.withOpacity(0.05),
                               blurRadius: 10,
                             ),
                           ],
@@ -388,9 +462,9 @@ class _ReportsScreenState extends State<ReportsScreen> {
                         child: BarChart(
                           BarChartData(
                             alignment: BarChartAlignment.spaceAround,
-                            maxY:
-                                max(_totalIncome, _totalExpense) *
-                                1.2, // FIX: Tính Max Y + 20% đệm để cột không đụng nóc
+                            maxY: max(_totalIncome, _totalExpense) == 0
+                                ? 1000000
+                                : max(_totalIncome, _totalExpense) * 1.2,
                             barTouchData: BarTouchData(
                               enabled: true,
                               touchTooltipData: BarTouchTooltipData(
@@ -420,8 +494,7 @@ class _ReportsScreenState extends State<ReportsScreen> {
                               bottomTitles: AxisTitles(
                                 sideTitles: SideTitles(
                                   showTitles: true,
-                                  reservedSize:
-                                      40, // <--- THÊM DÒNG NÀY (Tăng khoảng trống đáy lên 40px)
+                                  reservedSize: 30,
                                   getTitlesWidget: (value, meta) {
                                     return Padding(
                                       padding: const EdgeInsets.only(top: 8),
@@ -460,7 +533,7 @@ class _ReportsScreenState extends State<ReportsScreen> {
                           ),
                         ),
                       ),
-                      const SizedBox(height: 16),
+                      const SizedBox(height: 50),
                     ],
                   ),
                 ),
@@ -468,6 +541,8 @@ class _ReportsScreenState extends State<ReportsScreen> {
       ),
     );
   }
+
+  // --- WIDGET CON & HELPER ---
 
   Widget _buildSummaryItem(
     String title,
@@ -502,20 +577,21 @@ class _ReportsScreenState extends State<ReportsScreen> {
     );
   }
 
-  // Hàm tạo Cột biểu đồ nâng cao (Có nền xám phía sau)
   BarChartGroupData _buildBarGroup(int x, double y, Color color, double maxY) {
+    double effectiveMaxY = maxY == 0 ? 100 : maxY;
+
     return BarChartGroupData(
       x: x,
       barRods: [
         BarChartRodData(
           toY: y,
           color: color,
-          width: 30, // FIX: Cột to hơn (30px)
+          width: 30,
           borderRadius: BorderRadius.circular(6),
           backDrawRodData: BackgroundBarChartRodData(
             show: true,
-            toY: maxY * 1.2, // Chiều cao cột nền
-            color: Colors.grey.withValues(alpha: 0.1), // Màu nền xám nhạt
+            toY: effectiveMaxY * 1.2,
+            color: Colors.grey.withOpacity(0.1),
           ),
         ),
       ],
@@ -529,64 +605,57 @@ class _ReportsScreenState extends State<ReportsScreen> {
     );
     if (total == 0) return [];
 
-    return _expenseStats.asMap().entries.map((entry) {
-      final index = entry.key;
-      final data = entry.value;
+    return _expenseStats.map((data) {
       final value = (data['total'] as num).toDouble();
       final percent = (value / total * 100);
       final color = _colorFromHex(data['color_hex']);
-
-      // FIX: Chỉ hiện Text % trên biểu đồ nếu miếng đó lớn hơn 5%
       final isLargeEnough = percent > 5;
 
       return PieChartSectionData(
         color: color,
         value: value,
-        title: isLargeEnough
-            ? '${percent.toStringAsFixed(1)}%'
-            : '', // Ẩn nếu quá nhỏ
+        title: isLargeEnough ? '${percent.toStringAsFixed(1)}%' : '',
         titleStyle: const TextStyle(
           fontSize: 12,
           fontWeight: FontWeight.bold,
           color: Colors.white,
-          shadows: [Shadow(color: Colors.black26, blurRadius: 2)],
         ),
-        radius: isLargeEnough
-            ? 100
-            : 80, // Miếng to thì lồi ra 1 chút (hiệu ứng 3D nhẹ)
+        radius: isLargeEnough ? 100 : 80,
         titlePositionPercentageOffset: 0.6,
       );
     }).toList();
   }
 
-  List<FlSpot> _generateLineChartData(List<Map<String, dynamic>> rawData) {
-    // 1. Tạo Map chứa 30/31 ngày, mặc định giá trị là 0
-    Map<int, double> dailyTotals = {};
-    final daysInMonth = DateTime(
-      _currentMonth.year,
-      _currentMonth.month + 1,
-      0,
-    ).day;
-
-    for (int i = 1; i <= daysInMonth; i++) {
-      dailyTotals[i] = 0;
-    }
-
-    // 2. Duyệt dữ liệu từ DB và cộng dồn vào ngày tương ứng
-    for (var item in rawData) {
-      // Giả sử item['date'] là int (milliseconds)
-      final date = DateTime.fromMillisecondsSinceEpoch(item['date'] as int);
-      final amount = (item['amount'] as num).toDouble();
-
-      if (dailyTotals.containsKey(date.day)) {
-        dailyTotals[date.day] = dailyTotals[date.day]! + amount;
-      }
-    }
-
-    // 3. Chuyển đổi thành điểm (FlSpot) cho biểu đồ
-    // X: Ngày (1, 2, 3...), Y: Số tiền
-    return dailyTotals.entries
-        .map((e) => FlSpot(e.key.toDouble(), e.value))
-        .toList();
+  Widget _buildTabButton(String title, ReportType type) {
+    final isSelected = _currentType == type;
+    return Expanded(
+      child: GestureDetector(
+        onTap: () {
+          setState(() {
+            _currentType = type;
+            _selectedDate = DateTime.now();
+          });
+          _loadData();
+        },
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 8),
+          decoration: BoxDecoration(
+            color: isSelected ? Colors.white : Colors.transparent,
+            borderRadius: BorderRadius.circular(8),
+            boxShadow: isSelected
+                ? [const BoxShadow(color: Colors.black12, blurRadius: 4)]
+                : null,
+          ),
+          alignment: Alignment.center,
+          child: Text(
+            title,
+            style: TextStyle(
+              fontWeight: FontWeight.bold,
+              color: isSelected ? AppColors.primary : Colors.grey,
+            ),
+          ),
+        ),
+      ),
+    );
   }
 }
