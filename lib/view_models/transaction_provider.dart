@@ -52,9 +52,29 @@ class TransactionProvider with ChangeNotifier {
   }
 
   // 3. Thêm giao dịch mới
-  Future<void> addTransaction(TransactionModel transaction) async {
-    await DatabaseHelper.instance.insertTransaction(transaction);
-    // Reload lại dữ liệu tháng hiện tại để Dashboard cập nhật ngay
+ Future<void> addTransaction(TransactionModel transaction) async {
+    // 1. Lấy User ID hiện tại
+    final uid = _currentUserId;
+    if (uid.isEmpty) return; // Chưa đăng nhập thì không cho lưu
+
+    // 2. Tạo một giao dịch mới, sao chép dữ liệu cũ NHƯNG thêm userId vào
+    final newTransaction = TransactionModel(
+      id: transaction.id, // ID tự tăng, để null cũng được
+      userId: uid, // <--- QUAN TRỌNG: Gắn thẻ "Đây là của User này"
+      amount: transaction.amount,
+      note: transaction.note,
+      date: transaction.date,
+      categoryId: transaction.categoryId,
+      type: transaction.type,
+      categoryName: transaction.categoryName,
+      categoryIcon: transaction.categoryIcon,
+      categoryColor: transaction.categoryColor,
+    );
+
+    // 3. Lưu cái mới có userId vào DB
+    await DatabaseHelper.instance.insertTransaction(newTransaction);
+    
+    // 4. Cập nhật UI
     await _calculateWalletBalance();
     await loadTransactionsByMonth(transaction.date);
   }

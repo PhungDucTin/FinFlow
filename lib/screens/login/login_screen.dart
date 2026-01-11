@@ -215,59 +215,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
                 const SizedBox(height: 30),
 
-                // 5. PHẦN SOCIAL LOGIN (Hoặc Google/Apple)
-                Row(
-                  children: [
-                    Expanded(child: Divider(color: Colors.grey[400])),
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 16),
-                      child: Text(
-                        _translations[_t]!['or']!,
-                        style: TextStyle(color: Colors.grey[600], fontWeight: FontWeight.w500),
-                      ),
-                    ),
-                    Expanded(child: Divider(color: Colors.grey[400])),
-                  ],
-                ),
-                const SizedBox(height: 20),
-                Row(
-                  children: [
-                    Expanded(
-                      child: _buildSocialButton(
-                        Icons.g_mobiledata,
-                        "Google",
-                        Colors.red,
-                        () async {
-                          if (_isLoading) return;
-                          setState(() => _isLoading = true);
-                          try {
-                            await _authService.signInWithGoogle();
-                            if (mounted) {
-                              Navigator.pushReplacementNamed(
-                                context,
-                                '/dashboard',
-                              );
-                            }
-                          } catch (e) {
-                            if (mounted) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(content: Text(e.toString())),
-                              );
-                            }
-                          } finally {
-                            if (mounted) {
-                              setState(() => _isLoading = false);
-                            }
-                          }
-                        },
-                      ),
-                    ),
-                  ],
-                ),
-
-                const SizedBox(height: 30),
-
-                // 6. NGÔN NGỮ (Tối giản)
+                // 5. NGÔN NGỮ (Tối giản)
                 TextButton.icon(
                   onPressed: _toggleLanguage,
                   icon: const Icon(Icons.language, size: 20),
