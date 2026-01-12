@@ -45,29 +45,9 @@ FinFlow is a personal finance management application on the Flutter platform, he
 * **Lịch (Calendar View):** Xem lại lịch sử giao dịch theo từng ngày trên lịch.
 * **Thống kê:** Biểu đồ trực quan hóa dòng tiền (đang phát triển).
 
-### 4. ⚙️ Tiện ích & Cài đặt (Settings)
-* **Quy tắc 50/30/20:** Hỗ trợ thiết lập ngân sách theo phương pháp quản lý tài chính nổi tiếng.
-* **Nhắc nhở:** Cài đặt thông báo nhắc ghi chép chi tiêu hàng ngày.
-* **Đa ngôn ngữ:** Hỗ trợ Tiếng Việt và các ngôn ngữ khác.
-* **Dữ liệu:** Sao lưu và khôi phục dữ liệu tài khoản.
-
 ---
 
-## 🏗️ Kiến trúc Hệ thống (Architecture)
-
-Dự án áp dụng mô hình phân lớp (Layered Architecture):
-
-```text
-lib/
-├── models/             # Data Models (Transaction, Category, User)
-├── data/               # Data Providers
-│   ├── local/          # SQLite Database Helper
-│   └── remote/         # Firebase Auth Service
-├── repositories/       # Repository Pattern (Xử lý luồng dữ liệu)
-├── view_models/        # State Management (Provider/Bloc/GetX)
-├── views/              # UI Screens (Dashboard, AddTransaction, Profile...)
-├── widgets/            # Reusable Widgets (CustomButton, CalculatorKeypad...)
-└── utils/              # Constants, Formatters, AppTheme
+## 🏗️ Kiến trúc Hệ thống (Architecture) 
 
 🗄️ Database Schema (SQLite)
 Bảng Transactions | Field | Type | Description | | :--- | :--- | :--- | | id | INTEGER PK | ID tự tăng | | amount | REAL | Số tiền | | note | TEXT | Ghi chú | | date | TEXT | Ngày giao dịch (ISO8601) | | type | TEXT | 'income' / 'expense' | | category_id| INTEGER FK | Liên kết bảng Categories |
